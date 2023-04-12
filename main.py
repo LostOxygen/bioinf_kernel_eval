@@ -27,7 +27,7 @@ def main(gpu: int, batch_size: int, epochs: int) -> None:
     """
     # set up devices and print system information
     start = time.perf_counter() # start timer
-    if gpu is None or not torch.cuda.is_available():
+    if gpu == -1 or not torch.cuda.is_available():
         device = "cpu"
     else:
         device = f"cuda:{gpu}"
@@ -61,7 +61,7 @@ def main(gpu: int, batch_size: int, epochs: int) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gpu", "-g", help="sets the train device var", type=int, default=None)
+    parser.add_argument("--gpu", "-g", help="sets the train device var", type=int, default=-1)
     parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=128)
     parser.add_argument("--epochs", "-e", help="specifies the train epochs", type=int, default=100)
     args = parser.parse_args()
