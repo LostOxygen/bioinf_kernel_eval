@@ -1,1 +1,4 @@
-pytorch
+wheel
+numpy
+torch
+torchsummary
