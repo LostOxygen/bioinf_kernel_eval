@@ -38,7 +38,7 @@ vgg_cfgs: Dict[str, List[Union[str, int]]] = {
 
 
 def _make_layers(vgg_cfg: List[Union[str, int]], batch_norm: bool = False,
-                 depthwise: bool = False) -> nn.Sequential:
+                 depthwise: bool = False, in_channels: int = 3) -> nn.Sequential:
     """
     Function to create the layers of the VGG neural network architecture.
     
@@ -51,13 +51,14 @@ def _make_layers(vgg_cfg: List[Union[str, int]], batch_norm: bool = False,
         layers: nn.Sequential object containing the composed layers
     """
     layers = nn.Sequential()
-    in_channels = 3
     for v in vgg_cfg:
         if v == "M":
             layers.append(nn.MaxPool2d((2, 2), (2, 2)))
         else:
             v = cast(int, v)
             if depthwise:
+                # initially in_channels is set to a specific value and will be overwritten by
+                # v using the dictionary values for the desired channels for VGG
                 conv2d = DepthwiseSeparableConvolution(in_channels, 1, v)
             else:
                 conv2d = nn.Conv2d(in_channels, v, (3, 3), (1, 1), (1, 1))
@@ -80,9 +81,9 @@ class VGG(nn.Module):
     """
 
     def __init__(self, vgg_cfg: List[Union[str, int]], batch_norm: bool = False,
-                 num_classes: int = 1000, depthwise: bool = False) -> None:
+                 num_classes: int = 1000, depthwise: bool = False, in_channels: int = 3) -> None:
         super().__init__()
-        self.features = _make_layers(vgg_cfg, batch_norm, depthwise)
+        self.features = _make_layers(vgg_cfg, batch_norm, depthwise, in_channels)
 
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
 
