@@ -9,6 +9,8 @@ import os
 from typing import Final
 import torch
 import torchsummary
+import torchvision
+import torchvision.transforms as transforms
 
 from kernel_eval.models import resnet34
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19
@@ -54,9 +56,21 @@ def main(gpu: int, batch_size: int, epochs: int, model: str, depthwise: bool) ->
 
 
     # ---------------- Create/Load Datasets ----------------
-    data = StreamingDataset(DATA_PATH, device=device)
-    in_channels = 427 # TODO: extact input channels from data
-    (width, height) = (300, 300) # TODO: extract width and height from data
+    #data = StreamingDataset(DATA_PATH, device=device)
+
+    #CIFAR10 Test
+    transform = transforms.Compose([transforms.ToTensor(),
+                                    transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5))])
+
+    cifar10_data = torchvision.datasets.CIFAR10(DATA_PATH, download=True, transform=transform)
+
+    data = torch.utils.data.DataLoader(cifar10_data,
+                                            batch_size=4,
+                                            shuffle=True,
+                                            num_workers=2)
+
+    in_channels = 3 # TODO: extact input channels from data
+    (width, height) = (32, 32) # TODO: extract width and height from data
 
     # ---------------- Load and Train Models ---------------
     match model:
