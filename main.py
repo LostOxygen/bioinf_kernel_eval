@@ -8,6 +8,10 @@ import argparse
 import os
 from typing import Final
 import torch
+import torchsummary
+
+from kernel_eval.models import resnet34
+from kernel_eval.models import vgg11
 
 DATA_PATH: Final[str] = "./data/"
 MODEL_OUTPUT_PATH: Final[str] = "./models/"
@@ -49,6 +53,11 @@ def main(gpu: int, batch_size: int, epochs: int) -> None:
 
     # ---------------- Load and Train Models ---------------
     # TODO: Load and Train Models
+    model_res_34 = resnet34()
+    torchsummary.summary(model_res_34, (3,224,224))
+
+    model_vgg_11 = vgg11()
+    torchsummary.summary(model_vgg_11, (3,224,224))
 
     # -------- Test Models and evaluate kernels ------------
     # TODO: Test Models and evaluate kernels
