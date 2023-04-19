@@ -1,0 +1,60 @@
+"""library for training functions"""
+
+from torch import optim
+from torch import nn
+from torch.utils.data import IterableDataset
+import pkbar
+
+def train_model(model: nn.Module, dataloader: IterableDataset,
+                epochs: int, device: str = "cpu") -> nn.Module:
+    """
+    Function to train a given model with a given dataset
+    
+    Parameters:
+        model: nn.Module - the model to train
+        dataloader: IterableDataset - the dataset to train on
+        epochs: int - the number of training epochs
+        device: str - the device to train on (cpu or cuda)
+    
+    Returns:
+        model: nn.Module - the trained model
+    """
+    # initialize model, loss function, optimizer and so on
+    model = model.to(device)
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+
+    for epoch in range(0, epochs):
+        # every epoch a new progressbar is created
+        # also, depending on the epoch the learning rate gets adjusted before
+        # the network is set into training mode
+        model.train()
+        kbar = pkbar.Kbar(target=len(dataloader)-1, epoch=epoch, num_epochs=epochs,
+                          width=20, always_stateful=True)
+
+        correct = 0
+        total = 0
+        running_loss = 0.0
+
+        for batch_idx, (data, label) in enumerate(dataloader):
+            data, label = data.to(device), label.to(device)
+            optimizer.zero_grad()
+            output = model(data)
+            loss = loss_fn(output, label)
+            loss.backward()
+
+            optimizer.step()
+            _, predicted = output.max(1)
+
+            # calculate the current running loss as well as the total accuracy
+            # and update the progressbar accordingly
+            running_loss += loss.item()
+            total += label.size(0)
+            correct += predicted.eq(label).sum().item()
+
+            kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
+                                           ("acc", 100. * correct / total)])
+
+    # TODO: evaluate test accuracy at the end of the training
+    return model

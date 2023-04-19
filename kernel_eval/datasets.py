@@ -1,6 +1,5 @@
 """library module for dataset implementations and helper functions"""
-from typing import Any, Iterator, Tuple, Union
-from itertools import cycle
+from typing import Any, Iterator, Union
 import torch
 import numpy as np
 from torch import Tensor
@@ -13,7 +12,7 @@ def create_1gb_random_array():
     arr = np.random.rand(array_size).astype(np.float32)
 
     # Save the array to disk as a binary file
-    np.save('1gb_array.npy', arr)
+    np.save("1gb_array.npy", arr)
 
 
 class StreamingDataset(IterableDataset[Any]):
@@ -32,9 +31,7 @@ class StreamingDataset(IterableDataset[Any]):
         return self.num_samples
 
     def __iter__(self) -> Iterator[Tensor]:
-        return cycle(self.load_data())
-
-    def load_data(self) -> Tuple[Tensor, Tensor]:
         """loads a random image from the data path with its according label"""
         for i in range(self.num_samples):
-            yield torch.tensor(self.data[i][0]), torch.tensor(self.data[i][1])
+            yield torch.tensor(self.data[i])
+
