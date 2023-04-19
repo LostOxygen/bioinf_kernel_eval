@@ -22,7 +22,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
     # initialize model, loss function, optimizer and so on
     model = model.to(device)
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
 
 
     for epoch in range(0, epochs):
