@@ -1,11 +1,20 @@
 """library module for dataset implementations and helper functions"""
-
 from typing import Any, Iterator, Tuple, Union
 from itertools import cycle
 import torch
 import numpy as np
 from torch import Tensor
 from torch.utils.data import IterableDataset
+
+
+def create_1gb_random_array():
+    # Create a 1GB array of random values
+    array_size = 1024**3 // 4  # Each element is a 32-bit float, so 4 bytes
+    arr = np.random.rand(array_size).astype(np.float32)
+
+    # Save the array to disk as a binary file
+    np.save('1gb_array.npy', arr)
+
 
 class StreamingDataset(IterableDataset[Any]):
     """
