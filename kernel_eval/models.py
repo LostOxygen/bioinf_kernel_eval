@@ -268,5 +268,5 @@ class ResNet(nn.Module):
 
 def resnet34(**kwargs) -> ResNet:
     layers=[3, 4, 6, 3]
-    model = ResNet(BasicBlock(), layers, **kwargs)
+    model = ResNet(BasicBlock, layers, **kwargs)
     return model
