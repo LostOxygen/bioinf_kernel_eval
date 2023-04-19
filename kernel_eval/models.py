@@ -5,6 +5,20 @@ import torch
 from torch import nn, Tensor
 
 
+__all__ = [
+    "VGG", "vgg11", "vgg13", "vgg16", "vgg19"
+]
+
+vgg_cfgs: Dict[str, List[Union[str, int]]] = {
+    "vgg11": [64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
+    "vgg13": [64, 64, "M", 128, 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
+    "vgg16": [64, 64, "M", 128, 128, "M", 256, 256, 256, "M",
+              512, 512, 512, "M", 512, 512, 512, "M"],
+    "vgg19": [64, 64, "M", 128, 128, "M", 256, 256, 256, 256,
+              "M", 512, 512, 512, 512, "M", 512, 512, 512, 512, "M"],
+}
+
+
 class DepthwiseSeparableConvolution(nn.Module):
     """
     Depthwise separable convolution layer.
@@ -23,20 +37,6 @@ class DepthwiseSeparableConvolution(nn.Module):
         return x_val
 
 
-__all__ = [
-    "VGG", "vgg11", "vgg13", "vgg16", "vgg19"
-]
-
-vgg_cfgs: Dict[str, List[Union[str, int]]] = {
-    "vgg11": [64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
-    "vgg13": [64, 64, "M", 128, 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
-    "vgg16": [64, 64, "M", 128, 128, "M", 256, 256, 256, "M",
-              512, 512, 512, "M", 512, 512, 512, "M"],
-    "vgg19": [64, 64, "M", 128, 128, "M", 256, 256, 256, 256,
-              "M", 512, 512, 512, 512, "M", 512, 512, 512, 512, "M"],
-}
-
-
 class VGG(nn.Module):
     """
     Implementation of VGG Neural Network Architecture.
@@ -46,7 +46,7 @@ class VGG(nn.Module):
     def __init__(self, vgg_cfg: List[Union[str, int]], batch_norm: bool = False,
                  num_classes: int = 1000, depthwise: bool = False, in_channels: int = 3) -> None:
         super().__init__()
-        self.features = _make_layers(vgg_cfg, batch_norm, depthwise, in_channels)
+        self.features = self._make_layers(vgg_cfg, batch_norm, depthwise, in_channels)
 
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
 
@@ -85,7 +85,7 @@ class VGG(nn.Module):
                 nn.init.normal_(module.weight, 0, 0.01)
                 nn.init.constant_(module.bias, 0)
 
-    def _make_layers(vgg_cfg: List[Union[str, int]], batch_norm: bool = False,
+    def _make_layers(self, vgg_cfg: List[Union[str, int]], batch_norm: bool = False,
                  depthwise: bool = False, in_channels: int = 3) -> nn.Sequential:
         """
         Function to create the layers of the VGG neural network architecture.
@@ -148,7 +148,8 @@ def vgg19(**kwargs) -> VGG:
 class BasicBlock(nn.Module):
     """
     Implementation of the basic building block for ResNet
-    Code adapted from: https://github.com/jarvislabsai/blog/blob/master/build_resnet34_pytorch/Building%20Resnet%20in%20PyTorch.ipynb
+    Code adapted from: 
+    https://github.com/jarvislabsai/blog/blob/master/build_resnet34_pytorch/Building%20Resnet%20in%20PyTorch.ipynb
     """
     expansion = 1
 
@@ -185,12 +186,13 @@ class BasicBlock(nn.Module):
 class ResNet(nn.Module):
     """
     Implementation of ResNet Neural Network Architecture.
-    Code adapted from: https://github.com/jarvislabsai/blog/blob/master/build_resnet34_pytorch/Building%20Resnet%20in%20PyTorch.ipynb
+    Code adapted from: 
+    https://github.com/jarvislabsai/blog/blob/master/build_resnet34_pytorch/Building%20Resnet%20in%20PyTorch.ipynb
     """
 
     def __init__(self, block: BasicBlock, layers: list[int], num_classes: int = 1000):
         super().__init__()
-        
+
         self.inplanes = 64
 
         self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
@@ -198,20 +200,20 @@ class ResNet(nn.Module):
         self.bn1 = nn.BatchNorm2d(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        
+
         self.layer1 = self._make_layers(block, 64, layers[0])
         self.layer2 = self._make_layers(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layers(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layers(block, 512, layers[3], stride=2)
-        
+
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 , num_classes)
 
 
     def _make_layers(self, block: BasicBlock, planes: int, blocks: int, stride: int = 1) \
         -> nn.Sequential:
-        downsample = None  
-   
+        downsample = None
+
         if stride != 1 or self.inplanes != planes:
             downsample = nn.Sequential(
                 nn.Conv2d(self.inplanes, planes, 1, stride, bias=False),
@@ -220,15 +222,15 @@ class ResNet(nn.Module):
 
         layers = []
         layers.append(block(self.inplanes, planes, stride, downsample))
-        
+
         self.inplanes = planes
-        
+
         for _ in range(1, blocks):
             layers.append(block(self.inplanes, planes))
 
         return nn.Sequential(*layers)
-    
-    
+
+
     def forward(self, x_val: Tensor) -> Tensor:
         out = self.conv1(x_val)           # 224x224
         out = self.bn1(out)
