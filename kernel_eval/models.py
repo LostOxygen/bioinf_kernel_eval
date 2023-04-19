@@ -10,9 +10,12 @@ class DepthwiseSeparableConvolution(nn.Module):
     Depthwise separable convolution layer.
     """
 
-    def __init__(self, n_in, kernels_per_layer, n_out):
+    def __init__(self, n_in: int, kernels_per_layer: int, n_out: int, kernel_size: int = 3):
         super().__init__()
-        self.depthwise = nn.Conv2d(n_in, n_in * kernels_per_layer, kernel_size=3,
+        # TODO: In some cases the kernel_size, stride and padding has to be changed in the original 
+        # unchanged networks (in restnet) should this be also changed in the depthwise seperable 
+        # convulution
+        self.depthwise = nn.Conv2d(n_in, n_in * kernels_per_layer, kernel_size=kernel_size,
                                    padding=1, groups=n_in)
         self.pointwise = nn.Conv2d(
             n_in * kernels_per_layer, n_out, kernel_size=1)
@@ -107,7 +110,9 @@ class VGG(nn.Module):
                 if depthwise:
                     # initially in_channels is set to a specific value and will be overwritten by
                     # v using the dictionary values for the desired channels for VGG
-                    conv2d = DepthwiseSeparableConvolution(in_channels, 1, v)
+                    conv2d = DepthwiseSeparableConvolution(n_in = in_channels, 
+                                                           kernels_per_layer = 1, n_out = v,
+                                                           kernel_size=3)
                 else:
                     conv2d = nn.Conv2d(in_channels, v, (3, 3), (1, 1), (1, 1))
                 if batch_norm:
@@ -152,14 +157,22 @@ class BasicBlock(nn.Module):
     """
     expansion = 1
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None):
+    def __init__(self, inplanes, planes, stride=1, downsample=None, depthwise: bool = False):
         super().__init__()
-        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3, stride=stride,
-                     padding=1, bias=False)
+        if depthwise:
+            self.conv1 = DepthwiseSeparableConvolution(n_in=inplanes, kernels_per_layer=1, 
+                                                       n_out=planes, kernel_size=3)
+        else:
+            self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3, stride=stride,
+                        padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1,
-                     padding=1, bias=False)
+        if depthwise:
+            self.conv2 = DepthwiseSeparableConvolution(n_in=planes, kernels_per_layer=1,
+                                                       n_out=planes, kernel_size=3)
+        else:
+            self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1,
+                        padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
         self.downsample = downsample
         self.stride = stride
@@ -188,28 +201,33 @@ class ResNet(nn.Module):
     Code adapted from: https://github.com/jarvislabsai/blog/blob/master/build_resnet34_pytorch/Building%20Resnet%20in%20PyTorch.ipynb
     """
 
-    def __init__(self, block: BasicBlock, layers: list[int], num_classes: int = 1000):
+    def __init__(self, block: BasicBlock, layers: list[int], num_classes: int = 1000, 
+                 depthwise: bool = False, in_channels: int = 3):
         super().__init__()
         
         self.inplanes = 64
 
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
-                               bias=False)
+        if(depthwise):
+            self.conv1 = DepthwiseSeparableConvolution(n_in = in_channels, kernels_per_layer = 1,
+                                                       n_out = self.inplanes, kernel_size = 7)
+        else:
+            self.conv1 = nn.Conv2d(in_channels, self.inplanes, kernel_size=7, stride=2, padding=3,
+                                   bias=False)
         self.bn1 = nn.BatchNorm2d(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         
-        self.layer1 = self._make_layers(block, 64, layers[0])
-        self.layer2 = self._make_layers(block, 128, layers[1], stride=2)
-        self.layer3 = self._make_layers(block, 256, layers[2], stride=2)
-        self.layer4 = self._make_layers(block, 512, layers[3], stride=2)
+        self.layer1 = self._make_layers(block, 64, layers[0], depthwise = depthwise)
+        self.layer2 = self._make_layers(block, 128, layers[1], stride=2, depthwise = depthwise)
+        self.layer3 = self._make_layers(block, 256, layers[2], stride=2, depthwise = depthwise)
+        self.layer4 = self._make_layers(block, 512, layers[3], stride=2, depthwise = depthwise)
         
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 , num_classes)
 
 
-    def _make_layers(self, block: BasicBlock, planes: int, blocks: int, stride: int = 1) \
-        -> nn.Sequential:
+    def _make_layers(self, block: BasicBlock, planes: int, blocks: int, stride: int = 1,
+                     depthwise: bool = False) -> nn.Sequential:
         downsample = None  
    
         if stride != 1 or self.inplanes != planes:
@@ -219,7 +237,7 @@ class ResNet(nn.Module):
             )
 
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
+        layers.append(block(self.inplanes, planes, stride, downsample, depthwise))
         
         self.inplanes = planes
         
@@ -246,7 +264,7 @@ class ResNet(nn.Module):
 
         return out
 
-def resnet34() -> ResNet:
+def resnet34(**kwargs) -> ResNet:
     layers=[3, 4, 6, 3]
-    model = ResNet(BasicBlock, layers)
+    model = ResNet(BasicBlock(), layers, **kwargs)
     return model
