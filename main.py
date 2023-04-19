@@ -18,11 +18,11 @@ from kernel_eval.datasets import StreamingDataset
 from kernel_eval.train import train_model
 from kernel_eval.utils import save_model
 
-DATA_PATH: Final[str] = "/prodi/hpcmem/dave/spots_ftir"
+DATA_PATH: Final[str] = "./data/"
 MODEL_OUTPUT_PATH: Final[str] = "./models/"
 
 
-def main(gpu: int, batch_size: int, epochs: int, model: str, depthwise: bool) -> None:
+def main(gpu: int, batch_size: int, epochs: int, model_type: str, depthwise: bool) -> None:
     """
     Main function to start the training, testing and evaluation procedures
         
@@ -49,7 +49,7 @@ def main(gpu: int, batch_size: int, epochs: int, model: str, depthwise: bool) ->
     print(f"## Using: {device}")
     print(f"## Batch Size: {batch_size}")
     print(f"## Epochs: {epochs}")
-    print(f"## Model: {model}")
+    print(f"## Model: {model_type}")
     print(f"## Depthwise: {depthwise}")
     print("#"*60)
     print()
@@ -65,27 +65,29 @@ def main(gpu: int, batch_size: int, epochs: int, model: str, depthwise: bool) ->
     cifar10_data = torchvision.datasets.CIFAR10(DATA_PATH, download=True, transform=transform)
 
     data = torch.utils.data.DataLoader(cifar10_data,
-                                            batch_size=4,
-                                            shuffle=True,
-                                            num_workers=2)
+                                       batch_size=128,
+                                       shuffle=True,
+                                       num_workers=2)
 
     in_channels = 3 # TODO: extact input channels from data
     (width, height) = (32, 32) # TODO: extract width and height from data
 
     # ---------------- Load and Train Models ---------------
-    match model:
-        case "vgg11": model = vgg11(in_channels=in_channels, depthwise=depthwise)
-        case "vgg13": model = vgg13(in_channels=in_channels, depthwise=depthwise)
-        case "vgg16": model = vgg16(in_channels=in_channels, depthwise=depthwise)
-        case "vgg19": model = vgg19(in_channels=in_channels, depthwise=depthwise)
-        case "resnet34": model = resnet34(in_channels=in_channels, depthwise=depthwise)
+    match model_type:
+        case "vgg11": model = vgg11(in_channels=in_channels, depthwise=depthwise, num_classes=10)
+        case "vgg13": model = vgg13(in_channels=in_channels, depthwise=depthwise, num_classes=10)
+        case "vgg16": model = vgg16(in_channels=in_channels, depthwise=depthwise, num_classes=10)
+        case "vgg19": model = vgg19(in_channels=in_channels, depthwise=depthwise, num_classes=10)
+        case "resnet34": model = resnet34(in_channels=in_channels,
+                                          depthwise=depthwise, num_classes=10)
         case _: raise ValueError(f"Model {model} not supported")
 
-    torchsummary.summary(model, (in_channels, width, height))
+    model = model.to(device)
+    torchsummary.summary(model, (in_channels, width, height), device="cpu" if gpu == -1 else "cuda")
 
     # -------- Test Models and evaluate kernels ------------
     model = train_model(model, data, epochs, device)
-    save_model(model, MODEL_OUTPUT_PATH, model, depthwise)
+    save_model(MODEL_OUTPUT_PATH, model_type, depthwise, model)
 
     end = time.perf_counter()
     duration = (round(end - start) / 60.) / 60.
@@ -98,7 +100,8 @@ if __name__ == "__main__":
     parser.add_argument("--gpu", "-g", help="sets the train device var", type=int, default=-1)
     parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=128)
     parser.add_argument("--epochs", "-e", help="specifies the train epochs", type=int, default=100)
-    parser.add_argument("--model", "-m", help="specifies the model arch", type=str, default="vgg11")
+    parser.add_argument("--model_type", "-m", help="specifies the model architecture",
+                        type=str, default="vgg11")
     parser.add_argument("--depthwise", "-d", help="enables depthwise conv",
                         action="store_true", default=False)
     args = parser.parse_args()
