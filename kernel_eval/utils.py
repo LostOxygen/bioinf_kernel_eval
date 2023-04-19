@@ -25,4 +25,4 @@ def save_model(model_path: str, model_name: str,
     if not os.path.isdir(model_path):
         os.mkdir(model_path)
 
-    torch.save(state, model_path+f"{model_name}_{'depthwise' if depthwise else ''}")
+    torch.save(state, model_path+f"{model_name}{'_depthwise' if depthwise else ''}")
