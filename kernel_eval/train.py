@@ -1,9 +1,11 @@
-"""library for training functions"""
+"""library for train and test functions"""
 
+import torch
 from torch import optim
 from torch import nn
 from torch.utils.data import IterableDataset
 import pkbar
+from tqdm import tqdm
 
 def train_model(model: nn.Module, dataloader: IterableDataset,
                 epochs: int, device: str = "cpu") -> nn.Module:
@@ -56,5 +58,31 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
 
-    # TODO: evaluate test accuracy at the end of the training
     return model
+
+
+def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu") -> None:
+    """
+    Function to test a given model with a given dataset
+    
+    Parameters:
+        model: nn.Module - the model to test
+        dataloader: IterableDataset - the dataset to test on
+        device: str - the device to test on (cpu or cuda)
+    
+    Returns:
+        None
+    """
+    # test the model without gradient calculation and in evaluation mode
+    with torch.no_grad():
+        model = model.to(device)
+        model.eval()
+        correct = 0
+        total = 0
+        for _, (data, label) in tqdm(enumerate(dataloader), total=len(dataloader)):
+            data, label = data.to(device), label.to(device)
+            output = model(data)
+            _, predicted = output.max(1)
+            total += label.size(0)
+            correct += predicted.eq(label).sum().item()
+        print(f"Test Accuracy: {100. * correct / total}%")

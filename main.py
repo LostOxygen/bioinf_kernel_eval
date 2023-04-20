@@ -10,19 +10,20 @@ from typing import Final
 import torch
 import torchsummary
 import torchvision
-import torchvision.transforms as transforms
+from torchvision.transforms import transforms
 
 from kernel_eval.models import resnet34
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19
 from kernel_eval.datasets import StreamingDataset
-from kernel_eval.train import train_model
+from kernel_eval.train import train_model, test_model
 from kernel_eval.utils import save_model
 
 DATA_PATH: Final[str] = "./data/"
 MODEL_OUTPUT_PATH: Final[str] = "./models/"
 
 
-def main(gpu: int, batch_size: int, epochs: int, model_type: str, depthwise: bool) -> None:
+def main(gpu: int, batch_size: int, epochs: int, model_type: str,
+         depthwise: bool, eval_only: bool) -> None:
     """
     Main function to start the training, testing and evaluation procedures
         
@@ -30,6 +31,9 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str, depthwise: boo
         gpu: int - specifies which gpu to use. If None, cpu is used
         batch_size: int - specifies the training batch size
         epochs: int - specifies the number of training epochs
+        model_type: str - specifies the model architecture
+        depthwise: bool - enables depthwise convolutions
+        eval: bool - evaluates the model without training
     
     Returns:
         None
@@ -72,6 +76,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str, depthwise: boo
     in_channels = 3 # TODO: extact input channels from data
     (width, height) = (32, 32) # TODO: extract width and height from data
 
+
     # ---------------- Load and Train Models ---------------
     match model_type:
         case "vgg11": model = vgg11(in_channels=in_channels, depthwise=depthwise, num_classes=10)
@@ -85,9 +90,14 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str, depthwise: boo
     model = model.to(device)
     torchsummary.summary(model, (in_channels, width, height), device="cpu" if gpu == -1 else "cuda")
 
+    if not eval:
+        model = train_model(model, data, epochs, device)
+        save_model(MODEL_OUTPUT_PATH, model_type, depthwise, model)
+
+
     # -------- Test Models and evaluate kernels ------------
-    model = train_model(model, data, epochs, device)
-    save_model(MODEL_OUTPUT_PATH, model_type, depthwise, model)
+    test_model(model, data, device)
+
 
     end = time.perf_counter()
     duration = (round(end - start) / 60.) / 60.
@@ -103,6 +113,8 @@ if __name__ == "__main__":
     parser.add_argument("--model_type", "-m", help="specifies the model architecture",
                         type=str, default="vgg11")
     parser.add_argument("--depthwise", "-d", help="enables depthwise conv",
+                        action="store_true", default=False)
+    parser.add_argument("--eval_only", "-ev", help="evaluates the model without training",
                         action="store_true", default=False)
     args = parser.parse_args()
     main(**vars(args))
