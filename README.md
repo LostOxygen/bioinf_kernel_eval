@@ -1,5 +1,5 @@
 # BioInformatics Kernel Evaluation
-Kernel Evaluation for Different Convolution Operations over Medical Images
+Performance Evaluation between Normal and Depthwise Seperable Convolutions for Medical Image Classification.
 
 ## Usage:
 ```
