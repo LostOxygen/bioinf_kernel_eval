@@ -90,7 +90,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     model = model.to(device)
     torchsummary.summary(model, (in_channels, width, height), device="cpu" if gpu == -1 else "cuda")
 
-    if not eval:
+    if not eval_only:
         model = train_model(model, data, epochs, device)
         save_model(MODEL_OUTPUT_PATH, model_type, depthwise, model)
 
