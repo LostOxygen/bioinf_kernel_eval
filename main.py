@@ -69,7 +69,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     cifar10_data = torchvision.datasets.CIFAR10(DATA_PATH, download=True, transform=transform)
 
     data = torch.utils.data.DataLoader(cifar10_data,
-                                       batch_size=128,
+                                       batch_size=batch_size,
                                        shuffle=True,
                                        num_workers=2)
 
