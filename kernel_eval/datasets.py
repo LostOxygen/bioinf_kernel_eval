@@ -1,37 +1,30 @@
 """library module for dataset implementations and helper functions"""
-from typing import Any, Iterator, Union
+from typing import Any, List
 import torch
 import numpy as np
 from torch import Tensor
-from torch.utils.data import IterableDataset
+from torch.utils.data import Dataset
+from torchvision.transforms import transforms
 
 
-def create_1gb_random_array():
-    # Create a 1GB array of random values
-    array_size = 1024**3 // 4  # Each element is a 32-bit float, so 4 bytes
-    arr = np.random.rand(array_size).astype(np.float32)
-
-    # Save the array to disk as a binary file
-    np.save("1gb_array.npy", arr)
-
-
-class StreamingDataset(IterableDataset[Any]):
+class StreamingDataset(Dataset[Any]):
     """
     Dataset class implementation which streams random image data from a given path
     """
 
-    def __init__(self, data_path: str, device: str = "cpu"):
+    def __init__(self, data_paths: List[str], transform: transforms=None):
         super().__init__()
-        self.data_path = data_path
-        self.device = device
-        self.data = np.load(data_path, mmap_mode="r")
+        # data_paths need to be a list of paths to the actual numpy data arrays
+        self.data_paths = data_paths
+        self.data = np.load(data_paths, mmap_mode="r")
         self.num_samples = len(self.data)
+        self.transform = transform
 
-    def __len__(self) -> Union[int, None]:
+    def __len__(self) -> int:
         return self.num_samples
 
-    def __iter__(self) -> Iterator[Tensor]:
-        """loads a random image from the data path with its according label"""
-        for i in range(self.num_samples):
-            yield torch.tensor(self.data[i])
-
+    def __getitem__(self, idx: int) -> Tensor:
+        # load and convert the numpy data to a tensor
+        data_item = torch.tensor(torch.from_numpy(self.data[idx])).to(self.device)
+        label = torch.tensor(torch.from_numpy(self.data[idx])).to(self.device)
+        return data_item, label
