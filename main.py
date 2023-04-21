@@ -17,14 +17,13 @@ from kernel_eval.datasets import process_data
 from kernel_eval.train import train_model, test_model
 from kernel_eval.utils import save_model, load_model
 
-# DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
-#                                "/prodi/hpcmem/spots_ftir/BC051111/",
-#                                "/prodi/hpcmem/spots_ftir/CO1002b/",
-#                                "/prodi/hpcmem/spots_ftir/CO1004/",
-#                                "/prodi/hpcmem/spots_ftir/CO1801a/",
-#                                "/prodi/hpcmem/spots_ftir/CO722/",
-#                                "/prodi/hpcmem/spots_ftir/LC704/",]
-DATA_PATHS: Final[List[str]] = ["./data/LC704/"]
+DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
+                               "/prodi/hpcmem/spots_ftir/BC051111/",
+                               "/prodi/hpcmem/spots_ftir/CO1002b/",
+                               "/prodi/hpcmem/spots_ftir/CO1004/",
+                               "/prodi/hpcmem/spots_ftir/CO1801a/",
+                               "/prodi/hpcmem/spots_ftir/CO722/",
+                               "/prodi/hpcmem/spots_ftir/LC704/",]
 DATA_OUT: Final[str] = "./data/"
 
 MODEL_OUTPUT_PATH: Final[str] = "./models/"
