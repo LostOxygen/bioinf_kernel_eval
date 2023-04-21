@@ -7,7 +7,7 @@ import numpy as np
 def save_model(model_path: str, model_name: str,
                depthwise: bool, model: nn.Module) -> None:
     """
-    Helper function to save the model unter the specified model_path
+    Helper function to save the model under the specified model_path
     e.g. -> /models/vgg16_depthwise
     
     Parameters:
@@ -29,7 +29,30 @@ def save_model(model_path: str, model_name: str,
     torch.save(state, model_path+f"{model_name}{'_depthwise' if depthwise else ''}")
 
 
-def create_1gb_random_array():
+def load_model(model_path: str, model_name: str,
+               depthwise: bool, model: nn.Module) -> nn.Module:
+    """
+    Helper function to load the model from the specified model_path
+    e.g. -> /models/vgg16_depthwise
+    
+    Parameters:
+    model_path: str - path to load the model from
+    model_name: str - name of the model
+    depthwise: bool - flag to indicate if the model is depthwise separable
+    model: nn.Module - model to load the weights into
+
+    Returns:
+        model: nn.Module - the model with the loaded weights and parameters
+    """
+    model_file = model_path+f"{model_name}{'_depthwise' if depthwise else ''}"
+    if os.path.isfile(model_file):
+        model_state = torch.load(model_file, map_location=lambda storage, loc: storage)
+        model.load_state_dict(model_state["model"], strict=True)
+
+    return model
+
+
+def create_1gb_random_array() -> None:
     """helper function to generate a random numpy array for testing"""
     # Create a 1GB array of random values
     array_size = 1024**3 // 4  # Each element is a 32-bit float, so 4 bytes
