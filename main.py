@@ -6,19 +6,27 @@ import socket
 import datetime
 import argparse
 import os
-from typing import Final
+from typing import Final, List
 import torch
 import torchsummary
-import torchvision
-from torchvision.transforms import transforms
+import webdataset as wds
 
 from kernel_eval.models import resnet34
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19
-from kernel_eval.datasets import StreamingDataset
+from kernel_eval.datasets import process_data
 from kernel_eval.train import train_model, test_model
-from kernel_eval.utils import save_model
+from kernel_eval.utils import save_model, load_model
 
-DATA_PATH: Final[str] = "./data/"
+# DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
+#                                "/prodi/hpcmem/spots_ftir/BC051111/",
+#                                "/prodi/hpcmem/spots_ftir/CO1002b/",
+#                                "/prodi/hpcmem/spots_ftir/CO1004/",
+#                                "/prodi/hpcmem/spots_ftir/CO1801a/",
+#                                "/prodi/hpcmem/spots_ftir/CO722/",
+#                                "/prodi/hpcmem/spots_ftir/LC704/",]
+DATA_PATHS: Final[List[str]] = ["./data/LC704/"]
+DATA_OUT: Final[str] = "./data/"
+
 MODEL_OUTPUT_PATH: Final[str] = "./models/"
 
 
@@ -60,44 +68,56 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
 
     # ---------------- Create/Load Datasets ----------------
-    #data = StreamingDataset(DATA_PATH, device=device)
+    if not os.path.isfile(DATA_OUT+"train_data.tar") \
+        or not os.path.isfile(DATA_OUT+"test_data.tar"):
+        print("[ saving train/test data and labels ]")
+        process_data(DATA_PATHS, DATA_OUT)
 
-    #CIFAR10 Test
-    transform = transforms.Compose([transforms.ToTensor(),
-                                    transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5))])
+    print("[ loading training datas ]")
+    train_data = wds.WebDataset(
+        DATA_OUT+"train_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
 
-    cifar10_data = torchvision.datasets.CIFAR10(DATA_PATH, download=True, transform=transform)
+    train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=1)
 
-    data = torch.utils.data.DataLoader(cifar10_data,
-                                       batch_size=batch_size,
-                                       shuffle=True,
-                                       num_workers=2)
-
-    in_channels = 3 # TODO: extact input channels from data
-    (width, height) = (32, 32) # TODO: extract width and height from data
+    # load a single image to get the input shape
+    # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
+    print("[ creating model ]")
+    tmp_data, _ = next(iter(train_loader))
+    in_channels = tmp_data.shape[1]  # should be 442
+    (width, height) = (tmp_data.shape[2], tmp_data.shape[3])  # should be 400x400
 
 
     # ---------------- Load and Train Models ---------------
     match model_type:
-        case "vgg11": model = vgg11(in_channels=in_channels, depthwise=depthwise, num_classes=10)
-        case "vgg13": model = vgg13(in_channels=in_channels, depthwise=depthwise, num_classes=10)
-        case "vgg16": model = vgg16(in_channels=in_channels, depthwise=depthwise, num_classes=10)
-        case "vgg19": model = vgg19(in_channels=in_channels, depthwise=depthwise, num_classes=10)
+        case "vgg11": model = vgg11(in_channels=in_channels, depthwise=depthwise, num_classes=1)
+        case "vgg13": model = vgg13(in_channels=in_channels, depthwise=depthwise, num_classes=1)
+        case "vgg16": model = vgg16(in_channels=in_channels, depthwise=depthwise, num_classes=1)
+        case "vgg19": model = vgg19(in_channels=in_channels, depthwise=depthwise, num_classes=1)
         case "resnet34": model = resnet34(in_channels=in_channels,
-                                          depthwise=depthwise, num_classes=10)
+                                          depthwise=depthwise, num_classes=2)
         case _: raise ValueError(f"Model {model} not supported")
 
     model = model.to(device)
     torchsummary.summary(model, (in_channels, width, height), device="cpu" if gpu == -1 else "cuda")
 
     if not eval_only:
-        model = train_model(model, data, epochs, device)
+        print("[ train model ]")
+        model = train_model(model, train_loader, epochs, device)
         save_model(MODEL_OUTPUT_PATH, model_type, depthwise, model)
 
+    del train_loader
 
-    # -------- Test Models and evaluate kernels ------------
-    test_model(model, data, device)
 
+    # -------- Test Models and Evaluate Kernels ------------
+    test_data = wds.WebDataset(
+        DATA_OUT+"test_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
+    test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
+
+    if eval_only:
+        model = load_model(MODEL_OUTPUT_PATH, model_type, depthwise, model)
+
+    print("[ evaluate model ]")
+    test_model(model, test_loader, device)
 
     end = time.perf_counter()
     duration = (round(end - start) / 60.) / 60.
@@ -107,7 +127,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gpu", "-g", help="sets the train device var", type=int, default=-1)
+    parser.add_argument("--gpu", "-g", help="sets the train device var", type=int, default=0)
     parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=128)
     parser.add_argument("--epochs", "-e", help="specifies the train epochs", type=int, default=100)
     parser.add_argument("--model_type", "-m", help="specifies the model architecture",

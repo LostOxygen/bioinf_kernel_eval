@@ -1,5 +1,4 @@
 """library for train and test functions"""
-
 import torch
 from torch import optim
 from torch import nn
@@ -23,16 +22,15 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
     """
     # initialize model, loss function, optimizer and so on
     model = model.to(device)
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
-
 
     for epoch in range(0, epochs):
         # every epoch a new progressbar is created
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
         model.train()
-        kbar = pkbar.Kbar(target=len(dataloader)-1, epoch=epoch, num_epochs=epochs,
+        kbar = pkbar.Kbar(target=585, epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
 
         correct = 0
@@ -40,7 +38,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         running_loss = 0.0
 
         for batch_idx, (data, label) in enumerate(dataloader):
-            data, label = data.to(device), label.to(device)
+            data, label = data.to(device), label.float().to(device)
             optimizer.zero_grad()
             output = model(data)
             loss = loss_fn(output, label)
@@ -79,7 +77,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
         model.eval()
         correct = 0
         total = 0
-        for _, (data, label) in tqdm(enumerate(dataloader), total=len(dataloader)):
+        for _, (data, label) in tqdm(enumerate(dataloader), total=146):
             data, label = data.to(device), label.to(device)
             output = model(data)
             _, predicted = output.max(1)
