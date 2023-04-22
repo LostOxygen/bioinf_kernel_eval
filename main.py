@@ -17,13 +17,14 @@ from kernel_eval.datasets import process_data
 from kernel_eval.train import train_model, test_model
 from kernel_eval.utils import save_model, load_model
 
-DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
-                               "/prodi/hpcmem/spots_ftir/BC051111/",
-                               "/prodi/hpcmem/spots_ftir/CO1002b/",
-                               "/prodi/hpcmem/spots_ftir/CO1004/",
-                               "/prodi/hpcmem/spots_ftir/CO1801a/",
-                               "/prodi/hpcmem/spots_ftir/CO722/",
-                               "/prodi/hpcmem/spots_ftir/LC704/",]
+# DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
+#                                "/prodi/hpcmem/spots_ftir/BC051111/",
+#                                "/prodi/hpcmem/spots_ftir/CO1002b/",
+#                                "/prodi/hpcmem/spots_ftir/CO1004/",
+#                                "/prodi/hpcmem/spots_ftir/CO1801a/",
+#                                "/prodi/hpcmem/spots_ftir/CO722/",
+#                                "/prodi/hpcmem/spots_ftir/LC704/",]
+DATA_PATHS: Final[List[str]] = ["./data/LC704/"]
 DATA_OUT: Final[str] = "./data/"
 
 MODEL_OUTPUT_PATH: Final[str] = "./models/"
@@ -88,10 +89,10 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     # ---------------- Load and Train Models ---------------
     match model_type:
-        case "vgg11": model = vgg11(in_channels=in_channels, depthwise=depthwise, num_classes=1)
-        case "vgg13": model = vgg13(in_channels=in_channels, depthwise=depthwise, num_classes=1)
-        case "vgg16": model = vgg16(in_channels=in_channels, depthwise=depthwise, num_classes=1)
-        case "vgg19": model = vgg19(in_channels=in_channels, depthwise=depthwise, num_classes=1)
+        case "vgg11": model = vgg11(in_channels=in_channels, depthwise=depthwise, num_classes=2)
+        case "vgg13": model = vgg13(in_channels=in_channels, depthwise=depthwise, num_classes=2)
+        case "vgg16": model = vgg16(in_channels=in_channels, depthwise=depthwise, num_classes=2)
+        case "vgg19": model = vgg19(in_channels=in_channels, depthwise=depthwise, num_classes=2)
         case "resnet34": model = resnet34(in_channels=in_channels,
                                           depthwise=depthwise, num_classes=2)
         case _: raise ValueError(f"Model {model} not supported")
@@ -101,7 +102,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     if not eval_only:
         print("[ train model ]")
-        model = train_model(model, train_loader, epochs, device)
+        model = train_model(model, train_loader, epochs, batch_size, device)
         save_model(MODEL_OUTPUT_PATH, model_type, depthwise, model)
 
     del train_loader
@@ -116,7 +117,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
         model = load_model(MODEL_OUTPUT_PATH, model_type, depthwise, model)
 
     print("[ evaluate model ]")
-    test_model(model, test_loader, device)
+    test_model(model, test_loader, batch_size, device)
 
     end = time.perf_counter()
     duration = (round(end - start) / 60.) / 60.

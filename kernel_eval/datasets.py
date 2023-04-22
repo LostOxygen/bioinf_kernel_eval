@@ -5,6 +5,7 @@ from glob import glob
 import torch
 import numpy as np
 from torch import Tensor
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torchvision.transforms import transforms
 import webdataset as wds
@@ -62,14 +63,14 @@ def process_data(data_paths: List[str], data_out: str) -> None:
                     train_sink.write({
                         "__key__": f"sample{train_key_counter:06d}",
                         "data.pyd": torch.from_numpy(curr_data).float(),
-                        "label.pyd": curr_label.long(),
+                        "label.pyd": F.one_hot(curr_label.long(), num_classes=2),
                     })
                     train_key_counter += 1
                 else:
                     test_sink.write({
                         "__key__": f"sample{test_key_counter:06d}",
                         "data.pyd": torch.from_numpy(curr_data).float(),
-                        "label.pyd": curr_label.long(),
+                        "label.pyd": F.one_hot(curr_label.long(), num_classes=2),
                     })
                     test_key_counter += 1
                 pbar.update(1)

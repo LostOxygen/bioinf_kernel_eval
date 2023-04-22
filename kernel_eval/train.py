@@ -7,7 +7,7 @@ import pkbar
 from tqdm import tqdm
 
 def train_model(model: nn.Module, dataloader: IterableDataset,
-                epochs: int, device: str = "cpu") -> nn.Module:
+                epochs: int, batch_size: int, device: str = "cpu") -> nn.Module:
     """
     Function to train a given model with a given dataset
     
@@ -15,6 +15,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         model: nn.Module - the model to train
         dataloader: IterableDataset - the dataset to train on
         epochs: int - the number of training epochs
+        batch_size: int - the batch size to calculate the progress bar
         device: str - the device to train on (cpu or cuda)
     
     Returns:
@@ -22,7 +23,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
     """
     # initialize model, loss function, optimizer and so on
     model = model.to(device)
-    loss_fn = nn.BCELoss()
+    loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
 
     for epoch in range(0, epochs):
@@ -30,7 +31,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
         model.train()
-        kbar = pkbar.Kbar(target=585, epoch=epoch, num_epochs=epochs,
+        kbar = pkbar.Kbar(target=624//8, epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
 
         correct = 0
@@ -38,7 +39,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         running_loss = 0.0
 
         for batch_idx, (data, label) in enumerate(dataloader):
-            data, label = data.to(device), label.float().to(device)
+            data, label = data.to(device), label[0].float().to(device)
             optimizer.zero_grad()
             output = model(data)
             loss = loss_fn(output, label)
@@ -59,7 +60,8 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
     return model
 
 
-def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu") -> None:
+def test_model(model: nn.Module, dataloader: IterableDataset,
+               batch_size: int, device: str="cpu") -> None:
     """
     Function to test a given model with a given dataset
     
@@ -77,7 +79,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
         model.eval()
         correct = 0
         total = 0
-        for _, (data, label) in tqdm(enumerate(dataloader), total=146):
+        for _, (data, label) in tqdm(enumerate(dataloader), total=156//batch_size):
             data, label = data.to(device), label.to(device)
             output = model(data)
             _, predicted = output.max(1)

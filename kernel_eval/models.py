@@ -58,7 +58,7 @@ class VGG(nn.Module):
             nn.ReLU(True),
             nn.Dropout(0.5),
             nn.Linear(4096, num_classes),
-            nn.Sigmoid()
+            # nn.Sigmoid()
         )
 
         # Initialize neural network weights
@@ -158,7 +158,7 @@ class BasicBlock(nn.Module):
 
     def __init__(self, inplanes, planes, stride=1, downsample: bool=None, depthwise: bool = False):
         super().__init__()
-        self.sigmoid = nn.Sigmoid()
+        # self.sigmoid = nn.Sigmoid()
         if depthwise:
             self.conv1 = DepthwiseSeparableConvolution(n_in=inplanes, kernels_per_layer=1,
                                                        stride=stride, n_out=planes,
@@ -193,7 +193,7 @@ class BasicBlock(nn.Module):
             identity = self.downsample(x)
 
         out += identity
-        out = self.sigmoid(out)
+        # out = self.sigmoid(out)
 
         return out
 
