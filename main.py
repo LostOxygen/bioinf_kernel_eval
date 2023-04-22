@@ -73,7 +73,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
         print("[ saving train/test data and labels ]")
         process_data(DATA_PATHS, DATA_OUT)
 
-    print("[ loading training datas ]")
+    print("[ loading training data ]")
     train_data = wds.WebDataset(
         DATA_OUT+"train_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
 
