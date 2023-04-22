@@ -31,7 +31,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
         model.train()
-        kbar = pkbar.Kbar(target=624//8, epoch=epoch, num_epochs=epochs,
+        kbar = pkbar.Kbar(target=624//batch_size, epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
 
         correct = 0
