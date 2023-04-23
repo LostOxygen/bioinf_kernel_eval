@@ -25,7 +25,7 @@ DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
                                "/prodi/hpcmem/spots_ftir/CO722/",
                                "/prodi/hpcmem/spots_ftir/LC704/",]
 
-DATA_OUT: Final[str] = "./data/"
+DATA_OUT: Final[str] = "/prodi/hpcmem/spots_ftir/data_out/"
 
 MODEL_OUTPUT_PATH: Final[str] = "./models/"
 
