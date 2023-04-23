@@ -1,6 +1,6 @@
 """library module for different neural network architectures and helper classes"""
 
-from typing import cast, Dict, List, Union
+from typing import Dict, List, Union
 import torch
 from torch import nn, Tensor
 
@@ -40,54 +40,25 @@ class DepthwiseSeparableConvolution(nn.Module):
 class VGG(nn.Module):
     """
     Implementation of VGG Neural Network Architecture.
-    Code adapted from: https://github.com/Lornatang/VGG-PyTorch/blob/main/model.py
+    Code adapted from: https://github.com/kuangliu/pytorch-cifar/blob/master/models/vgg.py
     """
 
-    def __init__(self, vgg_cfg: List[Union[str, int]], batch_norm: bool = False,
-                 num_classes: int = 1000, depthwise: bool = False, in_channels: int = 3) -> None:
+    def __init__(self, vgg_cfg: List[Union[str, int]], num_classes: int = 1000,
+                 depthwise: bool = False, in_channels: int = 3) -> None:
         super().__init__()
-        self.features = self._make_layers(vgg_cfg, batch_norm, depthwise, in_channels)
-
-        self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
-
-        self.classifier = nn.Sequential(
-            nn.Linear(512 * 7 * 7, 4096),
-            nn.ReLU(True),
-            nn.Dropout(0.5),
-            nn.Linear(4096, 4096),
-            nn.ReLU(True),
-            nn.Dropout(0.5),
-            nn.Linear(4096, num_classes),
-            # nn.Sigmoid()
-        )
-
-        # Initialize neural network weights
-        self._initialize_weights()
+        self.features = self._make_layers(vgg_cfg, depthwise, in_channels)
+        self.classifier = nn.Linear(512, num_classes)
 
     def forward(self, x_val: Tensor) -> Tensor:
         out = self.features(x_val)
-        out = self.avgpool(out)
+        # out = self.avgpool(out)
         out = torch.flatten(out, 1)
         out = self.classifier(out)
 
         return out
 
-    def _initialize_weights(self) -> None:
-        for module in self.modules():
-            if isinstance(module, nn.Conv2d):
-                nn.init.kaiming_normal_(
-                    module.weight, mode="fan_out", nonlinearity="relu")
-                if module.bias is not None:
-                    nn.init.constant_(module.bias, 0)
-            elif isinstance(module, nn.BatchNorm2d):
-                nn.init.constant_(module.weight, 1)
-                nn.init.constant_(module.bias, 0)
-            elif isinstance(module, nn.Linear):
-                nn.init.normal_(module.weight, 0, 0.01)
-                nn.init.constant_(module.bias, 0)
-
-    def _make_layers(self, vgg_cfg: List[Union[str, int]], batch_norm: bool = False,
-                 depthwise: bool = False, in_channels: int = 3) -> nn.Sequential:
+    def _make_layers(self, vgg_cfg: List[Union[str, int]], depthwise: bool = False,
+                     in_channels: int = 3) -> nn.Sequential:
         """
         Function to create the layers of the VGG neural network architecture.
         
@@ -100,11 +71,11 @@ class VGG(nn.Module):
             layers: nn.Sequential object containing the composed layers
         """
         layers = nn.Sequential()
+
         for v in vgg_cfg:
             if v == "M":
-                layers.append(nn.MaxPool2d((2, 2), (2, 2)))
+                layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
             else:
-                v = cast(int, v)
                 if depthwise:
                     # initially in_channels is set to a specific value and will be overwritten by
                     # v using the dictionary values for the desired channels for VGG
@@ -112,41 +83,39 @@ class VGG(nn.Module):
                                                            kernels_per_layer = 1, n_out = v,
                                                            kernel_size=3, stride=1, padding=1)
                 else:
-                    conv2d = nn.Conv2d(in_channels, v, (3, 3), (1, 1), (1, 1))
-                if batch_norm:
-                    layers.append(conv2d)
-                    layers.append(nn.BatchNorm2d(v))
-                    layers.append(nn.ReLU(True))
-                else:
-                    layers.append(conv2d)
-                    layers.append(nn.ReLU(True))
+                    conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
+
+                layers.append(conv2d)
+                layers.append(nn.BatchNorm2d(v))
+                layers.append(nn.ReLU(inplace=True))
                 in_channels = v
 
         return layers
 
 
 def vgg11(**kwargs) -> VGG:
-    model = VGG(vgg_cfgs["vgg11"], False, **kwargs)
+    model = VGG(vgg_cfgs["vgg11"], **kwargs)
 
     return model
 
 
 def vgg13(**kwargs) -> VGG:
-    model = VGG(vgg_cfgs["vgg13"], False, **kwargs)
+    model = VGG(vgg_cfgs["vgg13"], **kwargs)
 
     return model
 
 
 def vgg16(**kwargs) -> VGG:
-    model = VGG(vgg_cfgs["vgg16"], False, **kwargs)
+    model = VGG(vgg_cfgs["vgg16"], **kwargs)
 
     return model
 
 
 def vgg19(**kwargs) -> VGG:
-    model = VGG(vgg_cfgs["vgg19"], False, **kwargs)
+    model = VGG(vgg_cfgs["vgg19"], **kwargs)
 
     return model
+
 
 class BasicBlock(nn.Module):
     """
@@ -193,7 +162,6 @@ class BasicBlock(nn.Module):
             identity = self.downsample(x)
 
         out += identity
-        # out = self.sigmoid(out)
 
         return out
 
