@@ -48,10 +48,11 @@ class VGG(nn.Module):
         super().__init__()
         self.features = self._make_layers(vgg_cfg, depthwise, in_channels)
         self.classifier = nn.Linear(512, num_classes)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
     def forward(self, x_val: Tensor) -> Tensor:
         out = self.features(x_val)
-        # out = self.avgpool(out)
+        out = self.avgpool(out)
         out = torch.flatten(out, 1)
         out = self.classifier(out)
 
