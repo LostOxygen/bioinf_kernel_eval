@@ -11,8 +11,7 @@ import torch
 import torchsummary
 import webdataset as wds
 
-from kernel_eval.models import resnet34
-from kernel_eval.models import vgg11, vgg13, vgg16, vgg19
+from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34, SmolNet
 from kernel_eval.datasets import process_data
 from kernel_eval.train import train_model, test_model
 from kernel_eval.utils import save_model, load_model
@@ -23,7 +22,7 @@ DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
                                "/prodi/hpcmem/spots_ftir/CO1004/",
                                "/prodi/hpcmem/spots_ftir/CO1801a/",
                                "/prodi/hpcmem/spots_ftir/CO722/",
-                               "/prodi/hpcmem/spots_ftir/LC704/",]
+                               "/prodi/hpcmem/spots_ftir/LC704/"]
 
 DATA_OUT: Final[str] = "/prodi/hpcmem/spots_ftir/data_out/"
 
@@ -89,6 +88,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     # ---------------- Load and Train Models ---------------
     match model_type:
+        case "smol": model = SmolNet(in_channels=in_channels, depthwise=depthwise, num_classes=2)
         case "vgg11": model = vgg11(in_channels=in_channels, depthwise=depthwise, num_classes=2)
         case "vgg13": model = vgg13(in_channels=in_channels, depthwise=depthwise, num_classes=2)
         case "vgg16": model = vgg16(in_channels=in_channels, depthwise=depthwise, num_classes=2)
