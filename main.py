@@ -97,8 +97,8 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
                                           depthwise=depthwise, num_classes=2)
         case _: raise ValueError(f"Model {model} not supported")
 
+    torchsummary.summary(model, (in_channels, width, height), device="cpu")
     model = model.to(device)
-    torchsummary.summary(model, (in_channels, width, height), device="cpu" if gpu == -1 else "cuda")
 
     if not eval_only:
         print("[ train model ]")
