@@ -5,6 +5,7 @@ from torch import nn
 from torch.utils.data import IterableDataset
 import pkbar
 from tqdm import tqdm
+import wandb
 
 def train_model(model: nn.Module, dataloader: IterableDataset,
                 epochs: int, batch_size: int, device: str = "cpu") -> nn.Module:
@@ -21,6 +22,20 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
     Returns:
         model: nn.Module - the trained model
     """
+
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="bioinf_cancer_detection",
+        
+        # track hyperparameters and run metadata
+        config={
+        "learning_rate": 0.001,
+        "architecture": "CNN",
+        "dataset": "Colon",
+        "epochs": epochs,
+        }
+    )
+
     # initialize model, loss function, optimizer and so on
     model = model.to(device)
     loss_fn = nn.CrossEntropyLoss()
@@ -54,6 +69,9 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
             total += label.size(0)
             correct += predicted.eq(label.max(-1)[1]).sum().item()
 
+            # log metrics to wandb
+            wandb.log({"train_acc": correct / total, "train_loss": running_loss})
+
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
 
@@ -85,4 +103,6 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
             _, predicted = output.max(1)
             total += label.size(0)
             correct += predicted.eq(label.max(-1)[1]).sum().item()
+        
+        wandb.log({"test_acc": correct / total})
         print(f"Test Accuracy: {100. * correct / total}%")
