@@ -39,9 +39,11 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         running_loss = 0.0
 
         for batch_idx, (data, label) in enumerate(dataloader):
-            data, label = data.to(device), label[0].float().to(device)
+            data, label = data.to(device), label.float().to(device)
+            label = torch.flatten(label).long()
             optimizer.zero_grad()
             output = model(data)
+
             loss = loss_fn(output, label)
             loss.backward()
 

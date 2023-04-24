@@ -76,7 +76,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     train_data = wds.WebDataset(
         DATA_OUT+"train_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
 
-    train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=1)
+    train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
 
     # load a single image to get the input shape
     # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
@@ -128,7 +128,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu", "-g", help="sets the train device var", type=int, default=0)
-    parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=128)
+    parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=32)
     parser.add_argument("--epochs", "-e", help="specifies the train epochs", type=int, default=100)
     parser.add_argument("--model_type", "-m", help="specifies the model architecture",
                         type=str, default="vgg11")
