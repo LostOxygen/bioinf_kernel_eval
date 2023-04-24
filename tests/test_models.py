@@ -9,19 +9,19 @@ class TestVGG(unittest.TestCase):
     def test_vgg11(self):
         """test the VGG11 neural network architecture"""
         model = vgg11()
-        self.assertEqual(21, len(model.features))
+        self.assertEqual(29, len(model.features))
 
     def test_vgg13(self):
         """test the VGG13 neural network architecture"""
         model = vgg13()
-        self.assertEqual(25, len(model.features))
+        self.assertEqual(35, len(model.features))
 
     def test_vgg16(self):
         """test the VGG16 neural network architecture"""
         model = vgg16()
-        self.assertEqual(31, len(model.features))
+        self.assertEqual(44, len(model.features))
 
     def test_vgg19(self):
         """test the VGG19 neural network architecture"""
         model = vgg19()
-        self.assertEqual(37, len(model.features))
+        self.assertEqual(53, len(model.features))
