@@ -46,13 +46,13 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
             loss.backward()
 
             optimizer.step()
-            _, predicted = output.max(1)
+            _, predicted = output.max(-1)
 
             # calculate the current running loss as well as the total accuracy
             # and update the progressbar accordingly
             running_loss += loss.item()
             total += label.size(0)
-            correct += predicted.eq(label).sum().item()
+            correct += predicted.eq(label.max(-1)[1]).sum().item()
 
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
@@ -84,5 +84,5 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
             output = model(data)
             _, predicted = output.max(1)
             total += label.size(0)
-            correct += predicted.eq(label).sum().item()
+            correct += predicted.eq(label.max(-1)[1]).sum().item()
         print(f"Test Accuracy: {100. * correct / total}%")
