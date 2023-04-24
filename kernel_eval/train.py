@@ -22,9 +22,9 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
         None
     """
     new_lr = learning_rate
-    if epoch >= torch.floor(torch.Tensor(epochs*0.5)):
+    if epoch >= torch.floor(torch.Tensor([epochs*0.5])):
         new_lr /= 10
-    if epoch >= torch.floor(torch.Tensor(epochs*0.75)):
+    if epoch >= torch.floor(torch.Tensor([epochs*0.75])):
         new_lr /= 10
     for param_group in optimizer.param_groups:
         param_group["lr"] = new_lr
