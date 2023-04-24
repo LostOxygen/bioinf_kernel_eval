@@ -6,6 +6,30 @@ from torch.utils.data import IterableDataset
 import pkbar
 from tqdm import tqdm
 
+
+def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int) -> None:
+    """
+    helper function to adjust the learning rate
+    according to the current epoch to prevent overfitting.
+    
+    Parameters:
+        optimizer: the optimizer to adjust the learning rate with
+        epoch: the current epoch
+        epochs: the total number of epochs
+        learning_rate: the learning rate to adjust
+
+    Returns:
+        None
+    """
+    new_lr = learning_rate
+    if epoch >= torch.floor(epochs*0.5):
+        new_lr /= 10
+    if epoch >= torch.floor(epochs*0.75):
+        new_lr /= 10
+    for param_group in optimizer.param_groups:
+        param_group["lr"] = new_lr
+
+
 def train_model(model: nn.Module, dataloader: IterableDataset,
                 epochs: int, batch_size: int, device: str = "cpu") -> nn.Module:
     """
@@ -37,6 +61,8 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         correct = 0
         total = 0
         running_loss = 0.0
+        # adjust the learning rate
+        adjust_learning_rate(optimizer, epoch, epochs, 0.001)
 
         for batch_idx, (data, label) in enumerate(dataloader):
             data, label = data.to(device), label.float().to(device)
