@@ -30,7 +30,7 @@ MODEL_OUTPUT_PATH: Final[str] = "./models/"
 
 
 def main(gpu: int, batch_size: int, epochs: int, model_type: str,
-         depthwise: bool, eval_only: bool) -> None:
+         depthwise: bool, eval_only: bool, learning_rate: float) -> None:
     """
     Main function to start the training, testing and evaluation procedures
         
@@ -59,6 +59,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
           f"{torch.cuda.device_count()} GPUs on {socket.gethostname()}")
     print(f"## Using: {device}")
     print(f"## Batch Size: {batch_size}")
+    print(f"## Learning Rate: {learning_rate}")
     print(f"## Epochs: {epochs}")
     print(f"## Model: {model_type}")
     print(f"## Depthwise: {depthwise}")
@@ -102,7 +103,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     if not eval_only:
         print("[ train model ]")
-        model = train_model(model, train_loader, epochs, batch_size, device)
+        model = train_model(model, train_loader, learning_rate, epochs, batch_size, device)
         save_model(MODEL_OUTPUT_PATH, model_type, depthwise, model)
 
     del train_loader
@@ -130,6 +131,8 @@ if __name__ == "__main__":
     parser.add_argument("--gpu", "-g", help="sets the train device var", type=int, default=0)
     parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=32)
     parser.add_argument("--epochs", "-e", help="specifies the train epochs", type=int, default=100)
+    parser.add_argument("--learning_rate", "-lr", help="specifies the learning rate",
+                        type=float, default=0.001)
     parser.add_argument("--model_type", "-m", help="specifies the model architecture",
                         type=str, default="vgg11")
     parser.add_argument("--depthwise", "-d", help="enables depthwise conv",

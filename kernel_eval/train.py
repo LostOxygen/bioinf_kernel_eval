@@ -30,7 +30,7 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
         param_group["lr"] = new_lr
 
 
-def train_model(model: nn.Module, dataloader: IterableDataset,
+def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: float,
                 epochs: int, batch_size: int, device: str = "cpu") -> nn.Module:
     """
     Function to train a given model with a given dataset
@@ -48,7 +48,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
     # initialize model, loss function, optimizer and so on
     model = model.to(device)
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
 
     for epoch in range(0, epochs):
         # every epoch a new progressbar is created
