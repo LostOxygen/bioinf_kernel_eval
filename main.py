@@ -9,6 +9,9 @@ import os
 from typing import Final, List
 import torch
 import torchsummary
+import torchvision
+
+import torchvision.transforms as transforms
 import webdataset as wds
 
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34, SmolNet
@@ -16,15 +19,18 @@ from kernel_eval.datasets import process_data
 from kernel_eval.train import train_model, test_model
 from kernel_eval.utils import save_model, load_model, log_metrics
 
-DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
-                               "/prodi/hpcmem/spots_ftir/BC051111/",
-                               "/prodi/hpcmem/spots_ftir/CO1002b/",
-                               "/prodi/hpcmem/spots_ftir/CO1004/",
-                               "/prodi/hpcmem/spots_ftir/CO1801a/",
-                               "/prodi/hpcmem/spots_ftir/CO722/",
-                               "/prodi/hpcmem/spots_ftir/LC704/"]
+# DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
+#                                "/prodi/hpcmem/spots_ftir/BC051111/",
+#                                "/prodi/hpcmem/spots_ftir/CO1002b/",
+#                                "/prodi/hpcmem/spots_ftir/CO1004/",
+#                                "/prodi/hpcmem/spots_ftir/CO1801a/",
+#                                "/prodi/hpcmem/spots_ftir/CO722/",
+#                                "/prodi/hpcmem/spots_ftir/LC704/"]
 
-DATA_OUT: Final[str] = "/prodi/hpcmem/spots_ftir/data_out/"
+DATA_PATHS: Final[List[str]] = [""]
+
+# DATA_OUT: Final[str] = "/prodi/hpcmem/spots_ftir/data_out/"
+DATA_OUT: Final[str] = "/data_out/"
 
 MODEL_OUTPUT_PATH: Final[str] = "./models/"
 
@@ -68,29 +74,43 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
 
     # ---------------- Create/Load Datasets ----------------
-    if not os.path.isfile(DATA_OUT+"train_data.tar") \
-        or not os.path.isfile(DATA_OUT+"test_data.tar"):
-        print("[ saving train/test data and labels ]")
-        process_data(DATA_PATHS, DATA_OUT)
+    # if not os.path.isfile(DATA_OUT+"train_data.tar") \
+    #     or not os.path.isfile(DATA_OUT+"test_data.tar"):
+    #     print("[ saving train/test data and labels ]")
+    #     process_data(DATA_PATHS, DATA_OUT)
 
-    print("[ loading training data ]")
-    train_data = wds.WebDataset(
-        DATA_OUT+"train_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
+    # print("[ loading training data ]")
+    # train_data = wds.WebDataset(
+    #     DATA_OUT+"train_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
 
-    train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
+    # train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
+
+    transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+    batch_size = 4
+
+    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                            download=True, transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
+                                            shuffle=True, num_workers=2)
+
+    testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+                                        download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
+                                            shuffle=False, num_workers=2)
 
     # load a single image to get the input shape
     # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
     print("[ creating model ]")
-    tmp_data, _ = next(iter(train_loader))
-    in_channels = tmp_data.shape[1]  # should be 442
-    (width, height) = (tmp_data.shape[2], tmp_data.shape[3])  # should be 400x400
+    images, _  = next(iter(trainloader))
+    in_channels = images.shape[1]  # should be 442
+    (width, height) = (images.shape[2], images.shape[3])  # should be 400x400
 
 
     # ---------------- Load and Train Models ---------------
     match model_type:
         case "smol": model = SmolNet(in_channels=in_channels, depthwise=depthwise, num_classes=2)
-        case "vgg11": model = vgg11(in_channels=in_channels, depthwise=depthwise, num_classes=2)
+        case "vgg11": model = vgg11(in_channels=in_channels, depthwise=depthwise, num_classes=10)
         case "vgg13": model = vgg13(in_channels=in_channels, depthwise=depthwise, num_classes=2)
         case "vgg16": model = vgg16(in_channels=in_channels, depthwise=depthwise, num_classes=2)
         case "vgg19": model = vgg19(in_channels=in_channels, depthwise=depthwise, num_classes=2)
@@ -103,18 +123,18 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     if not eval_only:
         print("[ train model ]")
-        model, train_accuracy = train_model(model, train_loader, learning_rate,
+        model, train_accuracy = train_model(model, trainloader, learning_rate,
                                             epochs, batch_size, device)
         save_model(MODEL_OUTPUT_PATH, model_type, depthwise,
                    batch_size, learning_rate, epochs, model)
 
-    del train_loader
+    del trainloader
 
 
     # -------- Test Models and Evaluate Kernels ------------
-    test_data = wds.WebDataset(
-        DATA_OUT+"test_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
-    test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
+    # test_data = wds.WebDataset(
+    #     DATA_OUT+"test_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
+    # test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
 
     if eval_only:
         train_accuracy = 0.0
@@ -122,7 +142,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
                            batch_size, learning_rate, epochs, model)
 
     print("[ evaluate model ]")
-    test_accuracy = test_model(model, test_loader, batch_size, device)
+    test_accuracy = test_model(model, testloader, batch_size, device)
 
     model_name = model_type + f"_{batch_size}bs_{learning_rate}lr_{epochs}ep"
     model_name += f"{'_depthwise' if depthwise else ''}"
