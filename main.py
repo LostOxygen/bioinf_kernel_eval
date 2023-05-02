@@ -14,7 +14,7 @@ import webdataset as wds
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34, SmolNet
 from kernel_eval.datasets import process_data
 from kernel_eval.train import train_model, test_model
-from kernel_eval.utils import save_model, load_model
+from kernel_eval.utils import save_model, load_model, log_metrics
 
 DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
                                "/prodi/hpcmem/spots_ftir/BC051111/",
@@ -103,7 +103,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     if not eval_only:
         print("[ train model ]")
-        model = train_model(model, train_loader, learning_rate, epochs, batch_size, device)
+        model, train_accuracy = train_model(model, train_loader, learning_rate, epochs, batch_size, device)
         save_model(MODEL_OUTPUT_PATH, model_type, depthwise,
                    batch_size, learning_rate, epochs, model)
 
@@ -116,11 +116,16 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
 
     if eval_only:
+        train_accuracy = 0.0
         model = load_model(MODEL_OUTPUT_PATH, model_type, depthwise,
                            batch_size, learning_rate, epochs, model)
 
     print("[ evaluate model ]")
-    test_model(model, test_loader, batch_size, device)
+    test_accuracy = test_model(model, test_loader, batch_size, device)
+
+    model_name = model_type + f"_{batch_size}bs_{lr}lr_{epochs}ep"
+    model_name += f"{'_depthwise' if depthwise else ''}"
+    log_metrics(train_acc=train_accuracy, test_acc=test_accuracy, model_name=model_name)
 
     end = time.perf_counter()
     duration = (round(end - start) / 60.) / 60.

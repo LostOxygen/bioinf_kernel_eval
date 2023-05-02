@@ -1,4 +1,5 @@
 """library for train and test functions"""
+from typing import Union
 import torch
 from torch import optim
 from torch import nn
@@ -31,7 +32,7 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
 
 
 def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: float,
-                epochs: int, batch_size: int, device: str = "cpu") -> nn.Module:
+                epochs: int, batch_size: int, device: str = "cpu") -> Union[nn.Module, float]:
     """
     Function to train a given model with a given dataset
     
@@ -44,6 +45,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
     
     Returns:
         model: nn.Module - the trained model
+        train_accuracy: float - the accuracy at the end of the training
     """
     # initialize model, loss function, optimizer and so on
     model = model.to(device)
@@ -85,11 +87,11 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
 
-    return model
+    return model, 100. * correct / total
 
 
 def test_model(model: nn.Module, dataloader: IterableDataset,
-               batch_size: int, device: str="cpu") -> None:
+               batch_size: int, device: str="cpu") -> float:
     """
     Function to test a given model with a given dataset
     
@@ -99,7 +101,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
         device: str - the device to test on (cpu or cuda)
     
     Returns:
-        None
+        test_accuracy: float - the test accuracy
     """
     # test the model without gradient calculation and in evaluation mode
     with torch.no_grad():
@@ -114,3 +116,5 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
             total += label.size(0)
             correct += predicted.eq(label.max(-1)[1]).sum().item()
         print(f"Test Accuracy: {100. * correct / total}%")
+
+    return 100. * correct / total
