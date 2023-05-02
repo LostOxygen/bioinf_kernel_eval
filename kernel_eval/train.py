@@ -1,4 +1,5 @@
 """library for train and test functions"""
+from typing import Union
 import torch
 from torch import optim
 from torch import nn
@@ -7,8 +8,32 @@ import pkbar
 from tqdm import tqdm
 import wandb
 
-def train_model(model: nn.Module, dataloader: IterableDataset,
-                epochs: int, batch_size: int, device: str = "cpu") -> nn.Module:
+
+def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int) -> None:
+    """
+    helper function to adjust the learning rate
+    according to the current epoch to prevent overfitting.
+    
+    Parameters:
+        optimizer: the optimizer to adjust the learning rate with
+        epoch: the current epoch
+        epochs: the total number of epochs
+        learning_rate: the learning rate to adjust
+
+    Returns:
+        None
+    """
+    new_lr = learning_rate
+    if epoch >= torch.floor(torch.Tensor([epochs*0.5])):
+        new_lr /= 10
+    if epoch >= torch.floor(torch.Tensor([epochs*0.75])):
+        new_lr /= 10
+    for param_group in optimizer.param_groups:
+        param_group["lr"] = new_lr
+
+
+def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: float,
+                epochs: int, batch_size: int, device: str = "cpu") -> Union[nn.Module, float]:
     """
     Function to train a given model with a given dataset
     
@@ -21,6 +46,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
     
     Returns:
         model: nn.Module - the trained model
+        train_accuracy: float - the accuracy at the end of the training
     """
 
     wandb.init(
@@ -38,8 +64,21 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
 
     # initialize model, loss function, optimizer and so on
     model = model.to(device)
-    loss_fn = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
+    # start a new wandb run to track this script
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="cifar_test",
+        
+        # track hyperparameters and run metadata
+        config={
+        "learning_rate": 0.001,
+        "architecture": "CNN",
+        "dataset": "CIFAR-100",
+        "epochs": 1,
+        }
+    )
 
     for epoch in range(0, epochs):
         # every epoch a new progressbar is created
@@ -52,12 +91,16 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         correct = 0
         total = 0
         running_loss = 0.0
+        # adjust the learning rate
+        adjust_learning_rate(optimizer, epoch, epochs, 0.001)
 
         for batch_idx, (data, label) in enumerate(dataloader):
-            data, label = data.to(device), label[0].float().to(device)
+            data, label = data.to(device), label.float().to(device)
+            label = torch.flatten(label).long()
             optimizer.zero_grad()
             output = model(data)
-            loss = loss_fn(output, label)
+            loss = criterion(output, label)
+            # loss = loss_fn(output, label)
             loss.backward()
 
             optimizer.step()
@@ -74,12 +117,13 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
 
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
+            wandb.log({"acc": 100. * correct / total, "loss": running_loss/(batch_idx+1)})
 
-    return model
+    return model, 100. * correct / total
 
 
 def test_model(model: nn.Module, dataloader: IterableDataset,
-               batch_size: int, device: str="cpu") -> None:
+               batch_size: int, device: str="cpu") -> float:
     """
     Function to test a given model with a given dataset
     
@@ -89,7 +133,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
         device: str - the device to test on (cpu or cuda)
     
     Returns:
-        None
+        test_accuracy: float - the test accuracy
     """
     # test the model without gradient calculation and in evaluation mode
     with torch.no_grad():
@@ -97,7 +141,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
         model.eval()
         correct = 0
         total = 0
-        for _, (data, label) in tqdm(enumerate(dataloader), total=156//batch_size):
+        for _, (data, label) in tqdm(enumerate(dataloader), total=154//batch_size):
             data, label = data.to(device), label.to(device)
             output = model(data)
             _, predicted = output.max(1)
@@ -106,3 +150,5 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
         
         wandb.log({"test_acc": correct / total})
         print(f"Test Accuracy: {100. * correct / total}%")
+
+    return 100. * correct / total
