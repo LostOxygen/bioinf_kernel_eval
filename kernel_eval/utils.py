@@ -3,6 +3,8 @@ import os
 import torch
 from torch import nn
 import numpy as np
+from datetime import datetime
+
 
 def save_model(model_path: str, model_name: str, depthwise: bool,
                batch_size: int, lr: float, epochs: int, model: nn.Module) -> None:
@@ -75,3 +77,26 @@ def create_1gb_random_array() -> None:
 
     # Save the array to disk as a binary file
     np.save("1gb_array.npy", arr)
+
+# Metric train_acc, test_acc, date
+# date, model_name, train_acc, test_acc
+
+def log_metrics(train_acc: float, test_acc: torch.Tensor, model_name: str) -> None:
+    """
+    Logs score and loss for a model over epochs and saves the log under ./logs/model_name.log
+    Parameters:
+        scores: torch.Tensor with the current scoreof a given model
+        loss: torch.Tensor with the current loss of a given model
+        epoch: current epoch
+        model_name: the name of the model
+    Returns:
+        None
+    """
+    if not os.path.exists("logs/"):
+        os.mkdir("logs/")
+
+    try:
+        with open(f"./logs/{model_name}.log", encoding="utf-8", mode="a") as log_file:
+            log_file.write(f"{datetime.now().strftime('%A, %d. %B %Y %I:%M%p')}" f" - train_acc: {train_acc} - test_acc: {test_acc}\n")
+    except OSError as error:
+        print(f"Could not write logs into /logs/{model_name}.log - error: {error}")
