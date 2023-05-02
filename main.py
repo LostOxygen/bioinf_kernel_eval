@@ -104,7 +104,8 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     if not eval_only:
         print("[ train model ]")
         model = train_model(model, train_loader, learning_rate, epochs, batch_size, device)
-        save_model(MODEL_OUTPUT_PATH, model_type, depthwise, model)
+        save_model(MODEL_OUTPUT_PATH, model_type, depthwise,
+                   batch_size, learning_rate, epochs, model)
 
     del train_loader
 
@@ -115,7 +116,8 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
 
     if eval_only:
-        model = load_model(MODEL_OUTPUT_PATH, model_type, depthwise, model)
+        model = load_model(MODEL_OUTPUT_PATH, model_type, depthwise,
+                           batch_size, learning_rate, epochs, model)
 
     print("[ evaluate model ]")
     test_model(model, test_loader, batch_size, device)
