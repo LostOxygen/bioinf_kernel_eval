@@ -123,7 +123,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     print("[ evaluate model ]")
     test_accuracy = test_model(model, test_loader, batch_size, device)
 
-    model_name = model_type + f"_{batch_size}bs_{lr}lr_{epochs}ep"
+    model_name = model_type + f"_{batch_size}bs_{learning_rate}lr_{epochs}ep"
     model_name += f"{'_depthwise' if depthwise else ''}"
     log_metrics(train_acc=train_accuracy, test_acc=test_accuracy, model_name=model_name)
 
