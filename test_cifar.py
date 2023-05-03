@@ -93,13 +93,12 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     model = model.to(device)
 
     print("[ train model ]")
-    model, train_accuracy = train_model(model, train_loader, learning_rate,
-                                        epochs, batch_size, device)
+    model, train_accuracy = train_model(model, train_loader, learning_rate, epochs, device)
 
 
     # -------- Test Models and Evaluate Kernels ------------
     print("[ evaluate model ]")
-    test_accuracy = test_model(model, test_loader, batch_size, device)
+    test_accuracy = test_model(model, test_loader, device)
 
     end = time.perf_counter()
     duration = (round(end - start) / 60.) / 60.
