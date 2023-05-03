@@ -64,7 +64,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
         total = 0
         running_loss = 0.0
         # adjust the learning rate
-        adjust_learning_rate(optimizer, epoch, epochs, 0.001)
+        adjust_learning_rate(optimizer, epoch, epochs, learning_rate)
 
         for batch_idx, (data, label) in enumerate(dataloader):
             data, label = data.to(device), label.to(device)
