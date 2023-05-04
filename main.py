@@ -101,10 +101,13 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     torchsummary.summary(model, (in_channels, width, height), device="cpu")
     model = model.to(device)
 
+    model_name = model_type + f"_{batch_size}bs_{learning_rate}lr_{epochs}ep"
+    model_name += f"{'_depthwise' if depthwise else ''}"
+
     if not eval_only:
         print("[ train model ]")
         model, train_accuracy = train_model(model, train_loader, learning_rate,
-                                            epochs, batch_size, device)
+                                            model_name, epochs, batch_size, device)
         save_model(MODEL_OUTPUT_PATH, model_type, depthwise,
                    batch_size, learning_rate, epochs, model)
 
@@ -124,8 +127,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     print("[ evaluate model ]")
     test_accuracy = test_model(model, test_loader, batch_size, device)
 
-    model_name = model_type + f"_{batch_size}bs_{learning_rate}lr_{epochs}ep"
-    model_name += f"{'_depthwise' if depthwise else ''}"
+
     log_metrics(train_acc=train_accuracy, test_acc=test_accuracy, model_name=model_name)
 
     end = time.perf_counter()
