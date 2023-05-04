@@ -84,8 +84,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
             total += label.size(0)
             correct += predicted.eq(label).sum().item()
 
-            kbar.update(batch_idx, values=[("model name", model_name),
-                                           ("loss", running_loss/(batch_idx+1)),
+            kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
 
     return model, 100. * correct / total
