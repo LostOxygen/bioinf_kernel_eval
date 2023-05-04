@@ -68,7 +68,6 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
 
         for batch_idx, (data, label) in enumerate(dataloader):
             data, label = data.to(device), label.to(device)
-            label = torch.flatten(label)
             optimizer.zero_grad()
             output = model(data)
 
