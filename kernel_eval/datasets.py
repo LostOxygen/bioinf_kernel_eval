@@ -53,7 +53,7 @@ def process_data(data_paths: List[str], data_out: str) -> None:
                 curr_data = np.pad(curr_data, ((0, 400-curr_data.shape[0]),
                                                (0, 400-curr_data.shape[1]),
                                                (0, 0)), mode="constant", constant_values=0)
-                # move the channel dimension to the first dimension für PyTorch
+                # move the channel dimension to the first dimension for PyTorch
                 curr_data = np.moveaxis(curr_data, -1, 0)
 
                 curr_label = torch.Tensor([labels[idx]])
