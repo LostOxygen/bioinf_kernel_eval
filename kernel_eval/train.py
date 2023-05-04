@@ -49,7 +49,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
     """
     # initialize model, loss function, optimizer and so on
     model = model.to(device)
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
 
     for epoch in range(0, epochs):
@@ -82,7 +82,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
             # and update the progressbar accordingly
             running_loss += loss.item()
             total += label.size(0)
-            correct += predicted.eq(label.max(-1)[1]).sum().item()
+            correct += predicted.eq(label).sum().item()
 
             kbar.update(batch_idx, values=[("model name", model_name),
                                            ("loss", running_loss/(batch_idx+1)),
@@ -115,7 +115,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
             output = model(data)
             _, predicted = output.max(1)
             total += label.size(0)
-            correct += predicted.eq(label.max(-1)[1]).sum().item()
+            correct += predicted.eq(label).sum().item()
         print(f"Test Accuracy: {100. * correct / total}%")
 
     return 100. * correct / total
