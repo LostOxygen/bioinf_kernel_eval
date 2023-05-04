@@ -32,7 +32,8 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
 
 
 def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: float,
-                model_name:str, epochs: int, batch_size: int, device: str = "cpu") -> Union[nn.Module, float]:
+                model_name:str, epochs: int, batch_size: int,
+                device: str = "cpu") -> Union[nn.Module, float]:
     """
     Function to train a given model with a given dataset
     
@@ -67,7 +68,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
         adjust_learning_rate(optimizer, epoch, epochs, learning_rate)
 
         for batch_idx, (data, label) in enumerate(dataloader):
-            data, label = data.to(device), label.to(device)
+            data, label = data.to(device), label.float().to(device)
             optimizer.zero_grad()
             output = model(data)
 
