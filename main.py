@@ -108,15 +108,21 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
 
     # ---------------- Load and Train Models ---------------
-    match model_type:
-        case "smol": model = SmolNet(in_channels=in_channels, depthwise=depthwise, num_classes=10)
-        case "vgg11": model = vgg11(in_channels=in_channels, depthwise=depthwise, num_classes=10)
-        case "vgg13": model = vgg13(in_channels=in_channels, depthwise=depthwise, num_classes=10)
-        case "vgg16": model = vgg16(in_channels=in_channels, depthwise=depthwise, num_classes=10)
-        case "vgg19": model = vgg19(in_channels=in_channels, depthwise=depthwise, num_classes=10)
-        case "resnet34": model = resnet34(in_channels=in_channels,
-                                          depthwise=depthwise, num_classes=2)
-        case _: raise ValueError(f"Model {model} not supported")
+    if model_type == "smol":
+        model = SmolNet(in_channels=in_channels, depthwise=depthwise, num_classes=10)
+    elif model_type == "vgg11":
+        model = vgg11(in_channels=in_channels, depthwise=depthwise, num_classes=10)
+    elif model_type == "vgg13":
+        model = vgg13(in_channels=in_channels, depthwise=depthwise, num_classes=10)
+    elif model_type == "vgg16":
+        model = vgg16(in_channels=in_channels, depthwise=depthwise, num_classes=10)
+    elif model_type == "vgg19":
+        model = vgg19(in_channels=in_channels, depthwise=depthwise, num_classes=10)
+    elif model_type == "resnet34":
+        model = resnet34(in_channels=in_channels, depthwise=depthwise, num_classes=2)
+    else:
+        raise ValueError(f"Model {model} not supported")
+
 
     torchsummary.summary(model, (in_channels, width, height), device="cpu")
     model = model.to(device)
@@ -169,3 +175,4 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     args = parser.parse_args()
     main(**vars(args))
+
