@@ -87,7 +87,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    batch_size = 4
+    # batch_size = 4
 
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                             download=True, transform=transform)
@@ -127,14 +127,14 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     torchsummary.summary(model, (in_channels, width, height), device="cpu")
     model = model.to(device)
 
-    if not eval_only:
-        print("[ train model ]")
-        model, train_accuracy = train_model(model, trainloader, learning_rate,
-                                            epochs, batch_size, device)
-        save_model(MODEL_OUTPUT_PATH, model_type, depthwise,
-                   batch_size, learning_rate, epochs, model)
+    # if not eval_only:
+    #     print("[ train model ]")
+    #     model, train_accuracy = train_model(model, trainloader, learning_rate,
+    #                                         epochs, batch_size, device)
+    #     save_model(MODEL_OUTPUT_PATH, model_type, depthwise,
+    #                batch_size, learning_rate, epochs, model)
 
-    del trainloader
+    # del trainloader
 
 
     # -------- Test Models and Evaluate Kernels ------------
@@ -142,23 +142,36 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     #     DATA_OUT+"test_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
     # test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
 
-    if eval_only:
-        train_accuracy = 0.0
-        model = load_model(MODEL_OUTPUT_PATH, model_type, depthwise,
-                           batch_size, learning_rate, epochs, model)
+    # if eval_only:
+    #     train_accuracy = 0.0
+    #     model = load_model(MODEL_OUTPUT_PATH, model_type, depthwise,
+    #                        batch_size, learning_rate, epochs, model)
 
+    # print("[ evaluate model ]")
+    # test_accuracy = test_model(model, testloader, batch_size, device)
+
+    # model_name = model_type + f"_{batch_size}bs_{learning_rate}lr_{epochs}ep"
+    # model_name += f"{'_depthwise' if depthwise else ''}"
+    # log_metrics(train_acc=train_accuracy, test_acc=test_accuracy, model_name=model_name)
+
+    print("[ train model ]")
+    model, train_accuracy = train_model(model, trainloader, learning_rate, epochs, device)
+
+
+    # -------- Test Models and Evaluate Kernels ------------
     print("[ evaluate model ]")
-    test_accuracy = test_model(model, testloader, batch_size, device)
-
-    model_name = model_type + f"_{batch_size}bs_{learning_rate}lr_{epochs}ep"
-    model_name += f"{'_depthwise' if depthwise else ''}"
-    log_metrics(train_acc=train_accuracy, test_acc=test_accuracy, model_name=model_name)
+    test_accuracy = test_model(model, testloader, device)
 
     end = time.perf_counter()
     duration = (round(end - start) / 60.) / 60.
     print(f"\nComputation time: {duration:0.4f} hours")
 
-
+    print("\n\n\n"+"#"*40)
+    print(f"## Model: {model_type}")
+    print(f"## Train-Accuracy: {train_accuracy}")
+    print(f"## Test-Accuracy: {test_accuracy}")
+    print(f"## Computation time: {duration:0.4f} hours")
+    print("#"*40)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
