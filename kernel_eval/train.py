@@ -85,7 +85,8 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
         model.train()
-        kbar = pkbar.Kbar(target=624//batch_size, epoch=epoch, num_epochs=epochs,
+
+        kbar = pkbar.Kbar(target=len(dataloader)-1, epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
 
         correct = 0
@@ -117,6 +118,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
 
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
+            
             wandb.log({"acc": 100. * correct / total, "loss": running_loss/(batch_idx+1)})
 
     return model, 100. * correct / total
