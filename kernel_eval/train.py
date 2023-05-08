@@ -6,7 +6,7 @@ from torch import nn
 from torch.utils.data import IterableDataset
 import pkbar
 from tqdm import tqdm
-import wandb
+# import wandb
 
 
 def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int) -> None:
@@ -49,36 +49,36 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
         train_accuracy: float - the accuracy at the end of the training
     """
 
-    wandb.init(
-        # set the wandb project where this run will be logged
-        project="bioinf_cancer_detection",
+    # wandb.init(
+    #     # set the wandb project where this run will be logged
+    #     project="bioinf_cancer_detection",
         
-        # track hyperparameters and run metadata
-        config={
-        "learning_rate": 0.001,
-        "architecture": "CNN",
-        "dataset": "Colon",
-        "epochs": epochs,
-        }
-    )
+    #     # track hyperparameters and run metadata
+    #     config={
+    #     "learning_rate": 0.001,
+    #     "architecture": "CNN",
+    #     "dataset": "Colon",
+    #     "epochs": epochs,
+    #     }
+    # )
 
     # initialize model, loss function, optimizer and so on
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
     # start a new wandb run to track this script
-    wandb.init(
-        # set the wandb project where this run will be logged
-        project="cifar_test",
+    # wandb.init(
+    #     # set the wandb project where this run will be logged
+    #     project="cifar_test",
         
-        # track hyperparameters and run metadata
-        config={
-        "learning_rate": 0.001,
-        "architecture": "CNN",
-        "dataset": "CIFAR-100",
-        "epochs": 1,
-        }
-    )
+    #     # track hyperparameters and run metadata
+    #     config={
+    #     "learning_rate": 0.001,
+    #     "architecture": "CNN",
+    #     "dataset": "CIFAR-100",
+    #     "epochs": 1,
+    #     }
+    # )
 
     for epoch in range(0, epochs):
         # every epoch a new progressbar is created
@@ -114,12 +114,12 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
             correct += predicted.eq(label.max(-1)[1]).sum().item()
 
             # log metrics to wandb
-            wandb.log({"train_acc": correct / total, "train_loss": running_loss})
+            # wandb.log({"train_acc": correct / total, "train_loss": running_loss})
 
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
             
-            wandb.log({"acc": 100. * correct / total, "loss": running_loss/(batch_idx+1)})
+            # wandb.log({"acc": 100. * correct / total, "loss": running_loss/(batch_idx+1)})
 
     return model, 100. * correct / total
 
@@ -150,7 +150,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
             total += label.size(0)
             correct += predicted.eq(label.max(-1)[1]).sum().item()
         
-        wandb.log({"test_acc": correct / total})
+        # wandb.log({"test_acc": correct / total})
         print(f"Test Accuracy: {100. * correct / total}%")
 
     return 100. * correct / total
