@@ -45,17 +45,20 @@ class VGG(nn.Module):
     """
 
     def __init__(self, vgg_cfg: List[Union[str, int]], num_classes: int = 1000,
-                 depthwise: bool = False, in_channels: int = 3) -> None:
+                 depthwise: bool = False, in_channels: int = 3, is_cifar: bool = False) -> None:
         super().__init__()
         self.features = self._make_layers(vgg_cfg, depthwise, in_channels)
         self.classifier = nn.Linear(512, num_classes)
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.is_cifar = is_cifar
 
     def forward(self, x_val: Tensor) -> Tensor:
         out = self.features(x_val)
-        out = self.avgpool(out)
         out = torch.flatten(out, 1)
         out = self.classifier(out)
+        if self.is_cifar:
+            out = F.softmax(out, dim=-1)
+        else:
+            out = F.sigmoid(out)
 
         return out
 
@@ -175,10 +178,11 @@ class ResNet(nn.Module):
     """
 
     def __init__(self, block: BasicBlock, layers: list[int], num_classes: int = 1000,
-                 depthwise: bool = False, in_channels: int = 3):
+                 depthwise: bool = False, in_channels: int = 3, is_cifar: bool = False):
         super().__init__()
 
         self.inplanes = 64
+        self.is_cifar = is_cifar
 
         if depthwise:
             self.conv1 = DepthwiseSeparableConvolution(n_in=in_channels, kernels_per_layer=1,
@@ -242,6 +246,11 @@ class ResNet(nn.Module):
         out = torch.flatten(out, 1)     # remove 1 X 1 grid and make vector of tensor shape
         out = self.fc(out)
 
+        if self.is_cifar:
+            out = F.softmax(out, dim=-1)
+        else:
+            out = F.sigmoid(out)
+
         return out
 
 def resnet34(**kwargs) -> ResNet:
@@ -254,8 +263,12 @@ class SmolNet(nn.Module):
     """
     Implementation of a small neural network architecture.
     """
-    def __init__(self, in_channels: int = 3, depthwise: bool = False, num_classes: int = 10):
+    def __init__(self, in_channels: int = 3, depthwise: bool = False,
+                 num_classes: int = 10, is_cifar: bool = False):
         super().__init__()
+        num_neurons = 400 if is_cifar else 150544
+        self.is_cifar = is_cifar
+
         if depthwise:
             self.conv1 = DepthwiseSeparableConvolution(in_channels, 5, 6)
             self.conv2 = DepthwiseSeparableConvolution(6, 5, 16)
@@ -264,15 +277,21 @@ class SmolNet(nn.Module):
             self.conv2 = nn.Conv2d(6, 16, 5)
 
         self.pool = nn.MaxPool2d(2, 2)
-        self.fc1 = nn.Linear(150544, 120)
+        self.fc1 = nn.Linear(num_neurons, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, num_classes)
 
-    def forward(self, x) -> torch.Tensor:
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = torch.flatten(x, 1)  # flatten all dimensions except batch
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x# F.softmax(x, dim=-1)
+    def forward(self, out) -> torch.Tensor:
+        out = self.pool(F.relu(self.conv1(out)))
+        out = self.pool(F.relu(self.conv2(out)))
+        out = torch.flatten(out, 1)  # flatten all dimensions except batch
+        out = F.relu(self.fc1(out))
+        out = F.relu(self.fc2(out))
+        out = self.fc3(out)
+
+        if self.is_cifar:
+            out = F.softmax(out, dim=-1)
+        else:
+            out = F.sigmoid(out)
+
+        return out
