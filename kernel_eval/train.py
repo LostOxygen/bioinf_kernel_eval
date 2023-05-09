@@ -129,12 +129,12 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
         model.eval()
         correct = 0
         total = 0
-        for _, (data, label) in tqdm(enumerate(dataloader), total=154//batch_size):
+        for _, (data, label) in tqdm(enumerate(dataloader), total=len(dataloader)-1):
             data, label = data.to(device), label.to(device)
             output = model(data)
             _, predicted = output.max(1)
             total += label.size(0)
-            correct += predicted.eq(label.max(-1)[1]).sum().item()
+            correct += predicted.eq(label).sum().item()
 
             wandb.log({"test_acc": 100 * correct / total})
         
