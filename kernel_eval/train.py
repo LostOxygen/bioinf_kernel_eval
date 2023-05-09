@@ -135,6 +135,8 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
             _, predicted = output.max(1)
             total += label.size(0)
             correct += predicted.eq(label.max(-1)[1]).sum().item()
+
+            wandb.log({"test_acc": 100 * correct / total})
         
         # wandb.log({"test_acc": correct / total})
         print(f"Test Accuracy: {100. * correct / total}%")
