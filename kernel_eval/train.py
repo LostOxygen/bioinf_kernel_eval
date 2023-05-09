@@ -93,13 +93,16 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
         total = 0
         running_loss = 0.0
         # adjust the learning rate
-        adjust_learning_rate(optimizer, epoch, epochs, 0.001)
+        # adjust_learning_rate(optimizer, epoch, epochs, 0.001)
 
         for batch_idx, (data, label) in enumerate(dataloader):
             data, label = data.to(device), label.float().to(device)
-            label = torch.flatten(label).long()
+
+            # label = torch.flatten(label).long()
+
             optimizer.zero_grad()
             output = model(data)
+
             loss = criterion(output, label)
             # loss = loss_fn(output, label)
             loss.backward()
@@ -111,8 +114,8 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
             # and update the progressbar accordingly
             running_loss += loss.item()
             total += label.size(0)
-            correct += predicted.eq(label.max(-1)[1]).sum().item()
-
+            # correct += predicted.eq(label.max(-1)[1]).sum().item()
+            correct += predicted.eq(label).sum().item()
             # log metrics to wandb
             # wandb.log({"train_acc": correct / total, "train_loss": running_loss})
 
