@@ -1,5 +1,5 @@
 """library for train and test functions"""
-from typing import Union
+from typing import Union, List
 import torch
 from torch import optim
 from torch import nn
@@ -8,8 +8,9 @@ import pkbar
 from tqdm import tqdm
 
 
-def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: float,
-                epochs: int, device: str = "cpu") -> Union[nn.Module, float]:
+def train_model(model: nn.Module, dataloader: IterableDataset,
+                learning_rate: float, epochs: int,
+                device: str = "cpu") -> Union[nn.Module, float, List[float], List[float]]:
     """
     Function to train a given model with a given dataset
     
@@ -23,8 +24,13 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
     Returns:
         model: nn.Module - the trained model
         train_accuracy: float - the accuracy at the end of the training
+        train_losses: List[float] - the losses at the end of each epoch
+        train_accs: List[float] - the accuracies at the end of each epoch
     """
     # initialize model, loss function, optimizer and so on
+    train_accs = []
+    train_losses = []
+
     model = model.to(device)
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
@@ -62,7 +68,11 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
 
-    return model, 100. * correct / total
+        # append the accuracy and loss of the current epoch to the lists
+        train_accs.append(100. * correct / len(dataloader))
+        train_losses.append(running_loss/len(dataloader))
+
+    return model, 100. * correct / total, train_accs, train_losses
 
 
 def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu") -> float:

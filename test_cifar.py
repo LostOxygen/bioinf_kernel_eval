@@ -14,6 +14,7 @@ from torchvision import transforms
 
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34, SmolNet
 from kernel_eval.train_cifar import train_model, test_model
+from kernel_eval.utils import plot_metrics
 
 DATA_OUT: Final[str] = "./data/"
 
@@ -98,7 +99,13 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     model = model.to(device)
 
     print("[ train model ]")
-    model, train_accuracy = train_model(model, train_loader, learning_rate, epochs, device)
+    model, train_accuracy, train_accs, train_losses = train_model(model, train_loader,
+                                                                  learning_rate, epochs, device)
+
+    model_name = model_type + f"CIFAR_{batch_size}bs_{learning_rate}lr_{epochs}ep"
+    model_name += f"{'_depthwise' if depthwise else ''}"
+
+    plot_metrics(train_acc=train_accs, train_loss=train_losses, model_name=model_name)
 
 
     # -------- Test Models and Evaluate Kernels ------------
