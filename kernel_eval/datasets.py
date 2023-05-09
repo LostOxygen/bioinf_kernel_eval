@@ -49,10 +49,6 @@ def process_data(data_paths: List[str], data_out: str) -> None:
 
             for idx, file in enumerate(file_list):
                 curr_data = np.load(file)
-                # pad the data to 400x400, so every image has the same resulting size
-                curr_data = np.pad(curr_data, ((0, 400-curr_data.shape[0]),
-                                               (0, 400-curr_data.shape[1]),
-                                               (0, 0)), mode="constant", constant_values=0)
                 # move the channel dimension to the first dimension for PyTorch
                 curr_data = np.moveaxis(curr_data, -1, 0)
 
