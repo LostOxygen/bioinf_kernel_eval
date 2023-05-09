@@ -89,8 +89,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     # ---------------- Load and Train Models ---------------
     match model_type:
-        case "smol": model = SmolNet(in_channels=in_channels, depthwise=depthwise,
-                                     num_classes=1, is_cifar=False)
+        case "smol": model = SmolNet(in_channels=in_channels, depthwise=depthwise, num_classes=1)
         case "vgg11": model = vgg11(in_channels=in_channels, depthwise=depthwise, num_classes=1)
         case "vgg13": model = vgg13(in_channels=in_channels, depthwise=depthwise, num_classes=1)
         case "vgg16": model = vgg16(in_channels=in_channels, depthwise=depthwise, num_classes=1)
