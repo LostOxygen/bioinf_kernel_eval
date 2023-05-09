@@ -32,7 +32,7 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
 
 
 def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: float,
-                epochs: int, batch_size: int, device: str = "cpu") -> Union[nn.Module, float]:
+                epochs: int, device: str = "cpu") -> Union[nn.Module, float]:
     """
     Function to train a given model with a given dataset
     
@@ -89,8 +89,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
     return model, 100. * correct / total
 
 
-def test_model(model: nn.Module, dataloader: IterableDataset,
-               batch_size: int, device: str="cpu") -> float:
+def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu") -> float:
     """
     Function to test a given model with a given dataset
     
