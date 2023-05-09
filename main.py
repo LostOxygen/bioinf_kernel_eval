@@ -30,7 +30,7 @@ from kernel_eval.utils import save_model, load_model, log_metrics
 DATA_PATHS: Final[List[str]] = [""]
 
 # DATA_OUT: Final[str] = "/prodi/hpcmem/spots_ftir/data_out/"
-DATA_OUT: Final[str] = "/data_out/"
+DATA_OUT: Final[str] = "/data/"
 
 MODEL_OUTPUT_PATH: Final[str] = "./models/"
 
