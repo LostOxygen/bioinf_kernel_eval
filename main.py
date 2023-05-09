@@ -12,12 +12,10 @@ import torchsummary
 import torchvision
 
 import torchvision.transforms as transforms
-import webdataset as wds
 
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34, SmolNet
-from kernel_eval.datasets import process_data
 from kernel_eval.train import train_model, test_model
-from kernel_eval.utils import save_model, load_model, log_metrics
+
 
 # DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
 #                                "/prodi/hpcmem/spots_ftir/BC051111/",
@@ -30,7 +28,7 @@ from kernel_eval.utils import save_model, load_model, log_metrics
 DATA_PATHS: Final[List[str]] = [""]
 
 # DATA_OUT: Final[str] = "/prodi/hpcmem/spots_ftir/data_out/"
-DATA_OUT: Final[str] = "/data/"
+DATA_OUT: Final[str] = "/data_out/"
 
 MODEL_OUTPUT_PATH: Final[str] = "./models/"
 
@@ -72,37 +70,26 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     print("#"*60)
     print()
 
+    transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    # ---------------- Create/Load Datasets ----------------
-    # if not os.path.isfile(DATA_OUT+"train_data.tar") \
-    #     or not os.path.isfile(DATA_OUT+"test_data.tar"):
-    #     print("[ saving train/test data and labels ]")
-    #     process_data(DATA_PATHS, DATA_OUT)
+    # batch_size = 4
 
-    # print("[ loading training data ]")
-    # train_data = wds.WebDataset(
-    #     DATA_OUT+"train_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
-
-    # train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
-
-    transform = transforms.Compose([transforms.ToTensor(),
-                                    transforms.Normalize((0.5, 0.5, 0.5),
-                                                         (0.5, 0.5, 0.5))])
-    trainset = torchvision.datasets.CIFAR10(root=DATA_OUT, train=True,
-                                        download=True, transform=transform)
+    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                            download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                             shuffle=True, num_workers=2)
 
-    testset = torchvision.datasets.CIFAR10(root=DATA_OUT, train=False,
+    testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                         download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                             shuffle=False, num_workers=2)
- # load a single image to get the input shape
+
+    # load a single image to get the input shape
     # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
     print("[ creating model ]")
-    tmp_data, _ = next(iter(trainloader))
-    in_channels = tmp_data.shape[1]  # should be 442
-    (width, height) = (tmp_data.shape[2], tmp_data.shape[3])  # should be 400x400
+    images, _  = next(iter(trainloader))
+    in_channels = images.shape[1]  # should be 442
+    (width, height) = (images.shape[2], images.shape[3])  # should be 400x400
 
 
     # ---------------- Load and Train Models ---------------
@@ -120,7 +107,6 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
         case "resnet34": model = resnet34(in_channels=in_channels, depthwise=depthwise,
                                           num_classes=10, is_cifar=True)
         case _: raise ValueError(f"Model {model} not supported")
-
 
 
     torchsummary.summary(model, (in_channels, width, height), device="cpu")
@@ -148,7 +134,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu", "-g", help="sets the train device var", type=int, default=0)
-    parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=128)
+    parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=32)
     parser.add_argument("--epochs", "-e", help="specifies the train epochs", type=int, default=100)
     parser.add_argument("--learning_rate", "-lr", help="specifies the learning rate",
                         type=float, default=0.001)
@@ -158,3 +144,4 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     args = parser.parse_args()
     main(**vars(args))
+
