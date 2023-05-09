@@ -79,8 +79,9 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     print("[ loading training data ]")
     train_transform = transforms.Compose([transforms.RandomResizedCrop(224),
-                                    transforms.RandomHorizontalFlip(),
-                                    transforms.ToTensor()])
+                                          transforms.ToPILImage(),
+                                          transforms.RandomHorizontalFlip(),
+                                          transforms.ToTensor()])
 
     train_data = wds.WebDataset(DATA_OUT+"train_data.tar").shuffle(1000).decode()
     train_data = train_data.to_tuple("data.pyd", "label.pyd").map_tuple(train_transform)
@@ -125,8 +126,9 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     # -------- Test Models and Evaluate Kernels ------------
     test_transform = transforms.Compose([transforms.Resize(256),
-                                transforms.CenterCrop(224),
-                                transforms.ToTensor()])
+                                         transforms.ToPILImage(),
+                                         transforms.CenterCrop(224),
+                                         transforms.ToTensor()])
 
     test_data = wds.WebDataset(DATA_OUT+"test_data.tar").shuffle(1000).decode()
     test_data = test_data.to_tuple("data.pyd", "label.pyd").map_tuple(test_transform)
