@@ -8,6 +8,7 @@ import argparse
 import os
 from typing import Final, List
 import torch
+from torchvision import transforms
 import torchsummary
 import webdataset as wds
 
@@ -74,8 +75,12 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
         process_data(DATA_PATHS, DATA_OUT)
 
     print("[ loading training data ]")
-    train_data = wds.WebDataset(
-        DATA_OUT+"train_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
+    transform = transforms.Compose([transforms.RandomResizedCrop(224),
+                                    transforms.RandomHorizontalFlip(),
+                                    transforms.ToTensor()])
+
+    train_data = wds.WebDataset(DATA_OUT+"train_data.tar").shuffle(1000).decode()
+    train_data = train_data.to_tuple("data.pyd", "label.pyd").map_tuple(transform)
 
     train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
 
@@ -116,8 +121,8 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
 
     # -------- Test Models and Evaluate Kernels ------------
-    test_data = wds.WebDataset(
-        DATA_OUT+"test_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
+    test_data = wds.WebDataset(DATA_OUT+"test_data.tar").shuffle(1000).decode()
+    test_data = test_data.to_tuple("data.pyd", "label.pyd")
     test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
 
     if eval_only:
@@ -140,7 +145,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu", "-g", help="sets the train device var", type=int, default=0)
-    parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=1)
+    parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=4)
     parser.add_argument("--epochs", "-e", help="specifies the train epochs", type=int, default=100)
     parser.add_argument("--learning_rate", "-lr", help="specifies the learning rate",
                         type=float, default=0.1)
