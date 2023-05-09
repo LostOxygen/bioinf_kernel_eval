@@ -120,12 +120,18 @@ def plot_metrics(train_acc: List[float], train_loss: List[float], model_name: st
         os.mkdir("plots/")
 
     try:
-        plt.plot(train_acc, label="train_acc")
-        plt.plot(train_loss, label="train_loss")
-        plt.title(f"Training Metrics - {model_name}")
-        plt.xlabel("Epochs")
-        plt.ylabel("Accuracy/Loss")
-        plt.legend()
+        _, ax = plt.subplots(1, 2, figsize=(10,5))
+        ax.set_title(f"Training Metrics - {model_name}")
+        ax[0].plot(train_loss)
+        ax[0].set_title("Training Loss")
+        ax[0].set_xlabel("Epoch")
+        ax[0].set_ylabel("Loss")
+        ax[1].plot(train_acc)
+        ax[1].set_title("Training Accuracy")
+        ax[1].set_xlabel("Epoch")
+        ax[1].set_ylabel("Accuracy")
+        ax.legend()
+
         plt.savefig(f"./plots/{model_name}.png")
         plt.close()
 

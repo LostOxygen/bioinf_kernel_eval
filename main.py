@@ -15,7 +15,7 @@ import webdataset as wds
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34, SmolNet
 from kernel_eval.datasets import process_data
 from kernel_eval.train import train_model, test_model
-from kernel_eval.utils import save_model, load_model, log_metrics, count_files
+from kernel_eval.utils import save_model, load_model, log_metrics, count_files, plot_metrics
 
 DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
                                "/prodi/hpcmem/spots_ftir/BC051111/",
@@ -78,8 +78,8 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     trainset_length, testset_length = count_files(DATA_PATHS, 0.8)
 
     print("[ loading training data ]")
-    train_transform = transforms.Compose([transforms.RandomResizedCrop(224),
-                                          transforms.ToPILImage(),
+    train_transform = transforms.Compose([transforms.ToPILImage(),
+                                          transforms.RandomResizedCrop(224),
                                           transforms.RandomHorizontalFlip(),
                                           transforms.ToTensor()])
 
@@ -117,7 +117,8 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     if not eval_only:
         print("[ train model ]")
-        model, train_accuracy = train_model(model, train_loader, learning_rate, epochs, device)
+        model, train_accuracy, train_accs, train_losses = train_model(model, train_loader,
+                                                                      learning_rate, epochs, device)
         save_model(MODEL_OUTPUT_PATH, model_type, depthwise,
                    batch_size, learning_rate, epochs, model)
 
@@ -125,8 +126,8 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
 
     # -------- Test Models and Evaluate Kernels ------------
-    test_transform = transforms.Compose([transforms.Resize(256),
-                                         transforms.ToPILImage(),
+    test_transform = transforms.Compose([transforms.ToPILImage(),
+                                         transforms.Resize(256),
                                          transforms.CenterCrop(224),
                                          transforms.ToTensor()])
 
@@ -145,6 +146,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
 
     log_metrics(train_acc=train_accuracy, test_acc=test_accuracy, model_name=model_name)
+    plot_metrics(train_acc=train_accs, train_loss=train_losses, model_name=model_name)
 
     end = time.perf_counter()
     duration = (round(end - start) / 60.) / 60.

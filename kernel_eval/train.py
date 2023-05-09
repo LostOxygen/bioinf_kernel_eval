@@ -1,5 +1,5 @@
 """library for train and test functions"""
-from typing import Union
+from typing import Union, List
 import torch
 from torch import optim
 from torch import nn
@@ -31,8 +31,9 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
         param_group["lr"] = new_lr
 
 
-def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: float,
-                epochs: int, device: str = "cpu") -> Union[nn.Module, float]:
+def train_model(model: nn.Module, dataloader: IterableDataset,
+                learning_rate: float, epochs: int,
+                device: str = "cpu") -> Union[nn.Module, float, List[float], List[float]]:
     """
     Function to train a given model with a given dataset
     
@@ -46,8 +47,13 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
     Returns:
         model: nn.Module - the trained model
         train_accuracy: float - the accuracy at the end of the training
+        train_losses: List[float] - the losses at the end of each epoch
+        train_accs: List[float] - the accuracies at the end of each epoch
     """
     # initialize model, loss function, optimizer and so on
+    train_accs = []
+    train_losses = []
+
     model = model.to(device)
     loss_fn = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
@@ -63,6 +69,8 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
         correct = 0
         total = 0
         running_loss = 0.0
+        epoch_loss = []
+        epoch_acc = []
         # adjust the learning rate
         adjust_learning_rate(optimizer, epoch, epochs, learning_rate)
 
@@ -80,13 +88,18 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
             # calculate the current running loss as well as the total accuracy
             # and update the progressbar accordingly
             running_loss += loss.item()
+            epoch_loss.append(loss.item())
             total += label.size(0)
             correct += predicted.eq(label).sum().item()
+            epoch_acc.append(100. * correct / total)
 
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
+        # append the accuracy and loss of the current epoch to the lists
+        train_accs.append(sum(epoch_acc) / len(epoch_acc))
+        train_losses.append(sum(epoch_loss) / len(epoch_loss))
 
-    return model, 100. * correct / total
+    return model, 100. * correct / total, train_accs, train_losses
 
 
 def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu") -> float:
