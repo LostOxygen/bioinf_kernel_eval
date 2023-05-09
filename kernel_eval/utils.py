@@ -1,7 +1,8 @@
 """utility library for various functions"""
 import os
+from glob import glob
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 import torch
 from torch import nn
 import numpy as np
@@ -130,3 +131,22 @@ def plot_metrics(train_acc: List[float], train_loss: List[float], model_name: st
 
     except OSError as error:
         print(f"Could not write plots into /plots/{model_name}.png - error: {error}")
+
+
+def count_files(data_paths: List[str], train_test_split: float) -> Tuple[int, int]:
+    """
+    Helper function to count all files in a list of paths and return the number of train and 
+    test files for a give train/test percentage split
+    Parameters:
+        path: list of paths to count the files in
+        train_test_split: percentage of files to use for training
+    Returns:
+        train_files: number of train files
+        test_files: number of test files
+    """
+    total_files = 0
+    for data_path in data_paths:
+        temp_file_list = glob(data_path+"data*.npy")
+        total_files += len(temp_file_list)
+
+    return int(total_files*train_test_split), int(total_files*(1-train_test_split))
