@@ -3,6 +3,7 @@ torch
 torchvision
 torchaudio
 torchsummary
+matplotlib
 pkbar
 tqdm
 webdataset

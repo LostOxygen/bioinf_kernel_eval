@@ -1,9 +1,11 @@
 """utility library for various functions"""
 import os
+from datetime import datetime
+from typing import List
 import torch
 from torch import nn
 import numpy as np
-from datetime import datetime
+from matplotlib import pyplot as plt
 
 
 def save_model(model_path: str, model_name: str, depthwise: bool,
@@ -97,6 +99,34 @@ def log_metrics(train_acc: float, test_acc: torch.Tensor, model_name: str) -> No
 
     try:
         with open(f"./logs/{model_name}.log", encoding="utf-8", mode="a") as log_file:
-            log_file.write(f"{datetime.now().strftime('%A, %d. %B %Y %I:%M%p')}" f" - train_acc: {train_acc} - test_acc: {test_acc}\n")
+            log_file.write(f"{datetime.now().strftime('%A, %d. %B %Y %I:%M%p')}" \
+                           f" - train_acc: {train_acc} - test_acc: {test_acc}\n")
     except OSError as error:
         print(f"Could not write logs into /logs/{model_name}.log - error: {error}")
+
+
+def plot_metrics(train_acc: List[float], train_loss: List[float], model_name: str) -> None:
+    """
+    Creates plots of the metrics using matplotlib and saves them under ./plots/model_name.png
+    Parameters:
+        train_acc: list of training accuracies
+        train_loss: list of training losses
+        model_name: the name of the model
+    Returns:
+        None
+    """
+    if not os.path.exists("plots/"):
+        os.mkdir("plots/")
+
+    try:
+        plt.plot(train_acc, label="train_acc")
+        plt.plot(train_loss, label="train_loss")
+        plt.title(f"Training Metrics - {model_name}")
+        plt.xlabel("Epochs")
+        plt.ylabel("Accuracy/Loss")
+        plt.legend()
+        plt.savefig(f"./plots/{model_name}.png")
+        plt.close()
+
+    except OSError as error:
+        print(f"Could not write plots into /plots/{model_name}.png - error: {error}")
