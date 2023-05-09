@@ -33,7 +33,7 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
 
 
 def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: float,
-                epochs: int, batch_size: int, device: str = "cpu") -> Union[nn.Module, float]:
+                epochs: int, device: str = "cpu") -> Union[nn.Module, float]:
     """
     Function to train a given model with a given dataset
     
@@ -48,63 +48,30 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
         model: nn.Module - the trained model
         train_accuracy: float - the accuracy at the end of the training
     """
-
-    # wandb.init(
-    #     # set the wandb project where this run will be logged
-    #     project="bioinf_cancer_detection",
-        
-    #     # track hyperparameters and run metadata
-    #     config={
-    #     "learning_rate": 0.001,
-    #     "architecture": "CNN",
-    #     "dataset": "Colon",
-    #     "epochs": epochs,
-    #     }
-    # )
-
     # initialize model, loss function, optimizer and so on
     model = model.to(device)
-    criterion = nn.CrossEntropyLoss()
+    loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
-    # start a new wandb run to track this script
-    # wandb.init(
-    #     # set the wandb project where this run will be logged
-    #     project="cifar_test",
-        
-    #     # track hyperparameters and run metadata
-    #     config={
-    #     "learning_rate": 0.001,
-    #     "architecture": "CNN",
-    #     "dataset": "CIFAR-100",
-    #     "epochs": 1,
-    #     }
-    # )
 
     for epoch in range(0, epochs):
         # every epoch a new progressbar is created
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
         model.train()
-
         kbar = pkbar.Kbar(target=len(dataloader)-1, epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
 
         correct = 0
         total = 0
         running_loss = 0.0
-        # adjust the learning rate
-        # adjust_learning_rate(optimizer, epoch, epochs, 0.001)
 
         for batch_idx, (data, label) in enumerate(dataloader):
             data, label = data.to(device), label.to(device)
 
-            # label = torch.flatten(label).long()
-
             optimizer.zero_grad()
             output = model(data)
 
-            loss = criterion(output, label)
-            # loss = loss_fn(output, label)
+            loss = loss_fn(output, label)
             loss.backward()
 
             optimizer.step()
@@ -114,17 +81,14 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
             # and update the progressbar accordingly
             running_loss += loss.item()
             total += label.size(0)
-            # correct += predicted.eq(label.max(-1)[1]).sum().item()
             correct += predicted.eq(label).sum().item()
-            # log metrics to wandb
-            # wandb.log({"train_acc": correct / total, "train_loss": running_loss})
 
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
-            
-            # wandb.log({"acc": 100. * correct / total, "loss": running_loss/(batch_idx+1)})
 
     return model, 100. * correct / total
+
+
 
 
 def test_model(model: nn.Module, dataloader: IterableDataset,

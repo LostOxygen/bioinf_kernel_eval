@@ -36,7 +36,7 @@ MODEL_OUTPUT_PATH: Final[str] = "./models/"
 
 
 def main(gpu: int, batch_size: int, epochs: int, model_type: str,
-         depthwise: bool, eval_only: bool, learning_rate: float) -> None:
+         depthwise: bool, learning_rate: float) -> None:
     """
     Main function to start the training, testing and evaluation procedures
         
@@ -85,26 +85,24 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     # train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
 
-    transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-    # batch_size = 4
-
-    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                            download=True, transform=transform)
+    transform = transforms.Compose([transforms.ToTensor(),
+                                    transforms.Normalize((0.5, 0.5, 0.5),
+                                                         (0.5, 0.5, 0.5))])
+    trainset = torchvision.datasets.CIFAR10(root=DATA_OUT, train=True,
+                                        download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                             shuffle=True, num_workers=2)
 
-    testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+    testset = torchvision.datasets.CIFAR10(root=DATA_OUT, train=False,
                                         download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                             shuffle=False, num_workers=2)
-
-    # load a single image to get the input shape
+ # load a single image to get the input shape
     # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
     print("[ creating model ]")
-    images, _  = next(iter(trainloader))
-    in_channels = images.shape[1]  # should be 442
-    (width, height) = (images.shape[2], images.shape[3])  # should be 400x400
+    tmp_data, _ = next(iter(trainloader))
+    in_channels = tmp_data.shape[1]  # should be 442
+    (width, height) = (tmp_data.shape[2], tmp_data.shape[3])  # should be 400x400
 
 
     # ---------------- Load and Train Models ---------------
@@ -128,33 +126,6 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     torchsummary.summary(model, (in_channels, width, height), device="cpu")
     model = model.to(device)
 
-    # if not eval_only:
-    #     print("[ train model ]")
-    #     model, train_accuracy = train_model(model, trainloader, learning_rate,
-    #                                         epochs, batch_size, device)
-    #     save_model(MODEL_OUTPUT_PATH, model_type, depthwise,
-    #                batch_size, learning_rate, epochs, model)
-
-    # del trainloader
-
-
-    # -------- Test Models and Evaluate Kernels ------------
-    # test_data = wds.WebDataset(
-    #     DATA_OUT+"test_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
-    # test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
-
-    # if eval_only:
-    #     train_accuracy = 0.0
-    #     model = load_model(MODEL_OUTPUT_PATH, model_type, depthwise,
-    #                        batch_size, learning_rate, epochs, model)
-
-    # print("[ evaluate model ]")
-    # test_accuracy = test_model(model, testloader, batch_size, device)
-
-    # model_name = model_type + f"_{batch_size}bs_{learning_rate}lr_{epochs}ep"
-    # model_name += f"{'_depthwise' if depthwise else ''}"
-    # log_metrics(train_acc=train_accuracy, test_acc=test_accuracy, model_name=model_name)
-
     print("[ train model ]")
     model, train_accuracy = train_model(model, trainloader, learning_rate, epochs, device)
 
@@ -177,16 +148,13 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu", "-g", help="sets the train device var", type=int, default=0)
-    parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=32)
+    parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=128)
     parser.add_argument("--epochs", "-e", help="specifies the train epochs", type=int, default=100)
     parser.add_argument("--learning_rate", "-lr", help="specifies the learning rate",
-                        type=float, default=0.1)
+                        type=float, default=0.001)
     parser.add_argument("--model_type", "-m", help="specifies the model architecture",
                         type=str, default="vgg11")
     parser.add_argument("--depthwise", "-d", help="enables depthwise conv",
                         action="store_true", default=False)
-    parser.add_argument("--eval_only", "-ev", help="evaluates the model without training",
-                        action="store_true", default=False)
     args = parser.parse_args()
     main(**vars(args))
-
