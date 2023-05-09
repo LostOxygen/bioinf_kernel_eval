@@ -15,7 +15,7 @@ import webdataset as wds
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34, SmolNet
 from kernel_eval.datasets import process_data
 from kernel_eval.train import train_model, test_model
-from kernel_eval.utils import save_model, load_model, log_metrics
+from kernel_eval.utils import save_model, load_model, log_metrics, count_files
 
 DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
                                "/prodi/hpcmem/spots_ftir/BC051111/",
@@ -74,6 +74,9 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
         print("[ saving train/test data and labels ]")
         process_data(DATA_PATHS, DATA_OUT)
 
+    # count the train and test files for train/test split of 80%/20%
+    trainset_length, testset_length = count_files(DATA_PATHS, 0.8)
+
     print("[ loading training data ]")
     train_transform = transforms.Compose([transforms.RandomResizedCrop(224),
                                     transforms.RandomHorizontalFlip(),
@@ -83,7 +86,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     train_data = train_data.to_tuple("data.pyd", "label.pyd").map_tuple(train_transform)
 
     train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
-    train_loader.length = len(train_data) // batch_size
+    train_loader.length = trainset_length // batch_size
 
     # load a single image to get the input shape
     # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
@@ -114,7 +117,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     if not eval_only:
         print("[ train model ]")
         model, train_accuracy = train_model(model, train_loader, learning_rate,
-                                            model_name, epochs, batch_size, device)
+                                            model_name, epochs, device)
         save_model(MODEL_OUTPUT_PATH, model_type, depthwise,
                    batch_size, learning_rate, epochs, model)
 
@@ -129,7 +132,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     test_data = wds.WebDataset(DATA_OUT+"test_data.tar").shuffle(1000).decode()
     test_data = test_data.to_tuple("data.pyd", "label.pyd").map_tuple(test_transform)
     test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
-    test_loader.length = len(train_data) // batch_size
+    test_loader.length = testset_length // batch_size
 
     if eval_only:
         train_accuracy = 0.0
@@ -137,7 +140,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
                            batch_size, learning_rate, epochs, model)
 
     print("[ evaluate model ]")
-    test_accuracy = test_model(model, test_loader, batch_size, device)
+    test_accuracy = test_model(model, test_loader, device)
 
 
     log_metrics(train_acc=train_accuracy, test_acc=test_accuracy, model_name=model_name)
