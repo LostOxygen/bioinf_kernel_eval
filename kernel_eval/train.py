@@ -32,7 +32,8 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
 
 
 def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: float,
-                model_name:str, epochs: int, batch_size: int, device: str = "cpu") -> Union[nn.Module, float]:
+                model_name:str, epochs: int, batch_size: int,
+                device: str = "cpu") -> Union[nn.Module, float]:
     """
     Function to train a given model with a given dataset
     
@@ -49,7 +50,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
     """
     # initialize model, loss function, optimizer and so on
     model = model.to(device)
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
 
     for epoch in range(0, epochs):
@@ -67,8 +68,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
         adjust_learning_rate(optimizer, epoch, epochs, learning_rate)
 
         for batch_idx, (data, label) in enumerate(dataloader):
-            data, label = data.to(device), label.to(device)
-            label = torch.flatten(label)
+            data, label = data.to(device), label.float().to(device)
             optimizer.zero_grad()
             output = model(data)
 
@@ -82,10 +82,9 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
             # and update the progressbar accordingly
             running_loss += loss.item()
             total += label.size(0)
-            correct += predicted.eq(label.max(-1)[1]).sum().item()
+            correct += predicted.eq(label).sum().item()
 
-            kbar.update(batch_idx, values=[("model name", model_name),
-                                           ("loss", running_loss/(batch_idx+1)),
+            kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
 
     return model, 100. * correct / total
@@ -115,7 +114,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
             output = model(data)
             _, predicted = output.max(1)
             total += label.size(0)
-            correct += predicted.eq(label.max(-1)[1]).sum().item()
+            correct += predicted.eq(label).sum().item()
         print(f"Test Accuracy: {100. * correct / total}%")
 
     return 100. * correct / total
