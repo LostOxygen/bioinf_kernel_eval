@@ -113,7 +113,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     model = model.to(device)
 
     print("[ train model ]")
-    model, train_accuracy = train_model(model, trainloader, learning_rate, epochs, device)
+    model, train_accuracy = train_model(model, trainloader, learning_rate, epochs, device, model_type)
 
 
     # -------- Test Models and Evaluate Kernels ------------

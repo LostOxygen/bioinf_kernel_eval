@@ -6,6 +6,9 @@ from torch import nn
 from torch.utils.data import IterableDataset
 import pkbar
 from tqdm import tqdm
+import wandb
+# start a new wandb run to track this script
+
 # import wandb
 
 
@@ -33,7 +36,7 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
 
 
 def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: float,
-                epochs: int, device: str = "cpu") -> Union[nn.Module, float]:
+                epochs: int, device: str = "cpu", model_type: str = "") -> Union[nn.Module, float]:
     """
     Function to train a given model with a given dataset
     
@@ -49,6 +52,19 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
         train_accuracy: float - the accuracy at the end of the training
     """
     # initialize model, loss function, optimizer and so on
+
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="my_cifar_test",
+        
+        # track hyperparameters and run metadata
+        config={
+        "learning_rate": learning_rate,
+        "architecture": model_type,
+        "dataset": "CIFAR-100",
+        "epochs": epochs,
+        }
+    )
     model = model.to(device)
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
@@ -85,6 +101,9 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
 
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
+            
+            # log metrics to wandb
+            wandb.log({"acc": 100 * correct / total, "loss": running_loss/(batch_idx+1)})
 
     return model, 100. * correct / total
 
