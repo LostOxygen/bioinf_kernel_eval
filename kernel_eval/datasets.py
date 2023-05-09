@@ -56,15 +56,15 @@ def process_data(data_paths: List[str], data_out: str) -> None:
                 if idx < len(file_list)*0.8:
                     train_sink.write({
                         "__key__": f"sample{train_key_counter:06d}",
-                        "data": curr_data,
-                        "label": curr_label,
+                        "data.pyd": curr_data,
+                        "label.pyd": curr_label,
                     })
                     train_key_counter += 1
                 else:
                     test_sink.write({
                         "__key__": f"sample{test_key_counter:06d}",
-                        "data": curr_data,
-                        "label": curr_label,
+                        "data.pyd": curr_data,
+                        "label.pyd": curr_label,
                     })
                     test_key_counter += 1
                 pbar.update(1)
