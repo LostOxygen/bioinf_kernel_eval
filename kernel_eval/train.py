@@ -32,8 +32,7 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
 
 
 def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: float,
-                model_name:str, epochs: int, batch_size: int,
-                device: str = "cpu") -> Union[nn.Module, float]:
+                epochs: int, batch_size: int, device: str = "cpu") -> Union[nn.Module, float]:
     """
     Function to train a given model with a given dataset
     
@@ -58,7 +57,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset, learning_rate: fl
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
         model.train()
-        kbar = pkbar.Kbar(target=624//batch_size, epoch=epoch, num_epochs=epochs,
+        kbar = pkbar.Kbar(target=dataloader.length, epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
 
         correct = 0
@@ -109,7 +108,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
         model.eval()
         correct = 0
         total = 0
-        for _, (data, label) in tqdm(enumerate(dataloader), total=154//batch_size):
+        for _, (data, label) in tqdm(enumerate(dataloader), total=dataloader.length):
             data, label = data.to(device), label.to(device)
             output = model(data)
             _, predicted = output.max(1)

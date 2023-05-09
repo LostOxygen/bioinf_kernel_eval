@@ -75,14 +75,15 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
         process_data(DATA_PATHS, DATA_OUT)
 
     print("[ loading training data ]")
-    transform = transforms.Compose([transforms.RandomResizedCrop(224),
+    train_transform = transforms.Compose([transforms.RandomResizedCrop(224),
                                     transforms.RandomHorizontalFlip(),
                                     transforms.ToTensor()])
 
     train_data = wds.WebDataset(DATA_OUT+"train_data.tar").shuffle(1000).decode()
-    train_data = train_data.to_tuple("data.pyd", "label.pyd").map_tuple(transform)
+    train_data = train_data.to_tuple("data.pyd", "label.pyd").map_tuple(train_transform)
 
     train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
+    train_loader.length = len(train_data) // batch_size
 
     # load a single image to get the input shape
     # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
@@ -121,9 +122,14 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
 
     # -------- Test Models and Evaluate Kernels ------------
+    test_transform = transforms.Compose([transforms.Resize(256),
+                                transforms.CenterCrop(224),
+                                transforms.ToTensor()])
+
     test_data = wds.WebDataset(DATA_OUT+"test_data.tar").shuffle(1000).decode()
-    test_data = test_data.to_tuple("data.pyd", "label.pyd")
+    test_data = test_data.to_tuple("data.pyd", "label.pyd").map_tuple(test_transform)
     test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
+    test_loader.length = len(train_data) // batch_size
 
     if eval_only:
         train_accuracy = 0.0
