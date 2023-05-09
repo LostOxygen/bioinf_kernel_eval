@@ -110,7 +110,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset,
         model.eval()
         correct = 0
         total = 0
-        for _, (data, label) in tqdm(enumerate(dataloader), total=154//int(batch_size)):
+        for _, (data, label) in tqdm(enumerate(dataloader), total=154//batch_size):
             data, label = data.to(device), label.to(device)
             output = model(data)
             _, predicted = output.max(1)

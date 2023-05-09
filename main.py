@@ -118,7 +118,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     # -------- Test Models and Evaluate Kernels ------------
     print("[ evaluate model ]")
-    test_accuracy = test_model(model, testloader, device)
+    test_accuracy = test_model(model, testloader, batch_size, device)
 
     end = time.perf_counter()
     duration = (round(end - start) / 60.) / 60.
