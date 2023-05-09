@@ -46,6 +46,8 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         correct = 0
         total = 0
         running_loss = 0.0
+        epoch_loss = []
+        epoch_acc = []
 
         for batch_idx, (data, label) in enumerate(dataloader):
             data, label = data.to(device), label.to(device)
@@ -62,15 +64,17 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
             # calculate the current running loss as well as the total accuracy
             # and update the progressbar accordingly
             running_loss += loss.item()
+            epoch_loss.append(loss.item())
             total += label.size(0)
             correct += predicted.eq(label).sum().item()
+            epoch_acc.append(100. * correct / total)
 
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
 
         # append the accuracy and loss of the current epoch to the lists
-        train_accs.append(100. * correct / len(dataloader))
-        train_losses.append(running_loss/len(dataloader))
+        train_accs.append(sum(epoch_acc) / len(epoch_acc))
+        train_losses.append(sum(epoch_loss) / len(epoch_loss))
 
     return model, 100. * correct / total, train_accs, train_losses
 
