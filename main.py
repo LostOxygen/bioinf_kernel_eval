@@ -83,7 +83,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
                                     transforms.ToTensor()])
 
     train_data = wds.WebDataset(DATA_OUT+"train_data.tar").shuffle(1000).decode()
-    train_data = train_data.to_tuple("data.pyd", "label.pyd").map_tuple(train_transform)
+    train_data = train_data.to_tuple("data", "label").map_tuple(train_transform)
 
     train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
     train_loader.length = trainset_length // batch_size
@@ -129,7 +129,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
                                 transforms.ToTensor()])
 
     test_data = wds.WebDataset(DATA_OUT+"test_data.tar").shuffle(1000).decode()
-    test_data = test_data.to_tuple("data.pyd", "label.pyd").map_tuple(test_transform)
+    test_data = test_data.to_tuple("data", "label").map_tuple(test_transform)
     test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
     test_loader.length = testset_length // batch_size
 
