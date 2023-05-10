@@ -1,5 +1,6 @@
 """utility library for various functions"""
 import os
+import random
 from glob import glob
 from datetime import datetime
 from typing import List, Tuple
@@ -7,9 +8,6 @@ import torch
 from torch import nn
 import numpy as np
 from matplotlib import pyplot as plt
-
-from torchvision import transforms
-
 
 def save_model(model_path: str, model_name: str, depthwise: bool,
                batch_size: int, lr: float, epochs: int, model: nn.Module) -> None:
@@ -176,10 +174,10 @@ def augment_images(img: torch.Tensor, size: int) -> torch.Tensor:
     target_h, target_w = size
     cropped_resized_channels = []
     for channel in range(c):
-        i = torch.random.randint(0, h - target_h)
-        j = torch.random.randint(0, w - target_w)
+        i = random.randint(0, h - target_h)
+        j = random.randint(0, w - target_w)
         cropped_channel = img[channel, i:i+target_h, j:j+target_w]
-        cropped_resized_channel = torch.nn.functional.interpolate(
+        cropped_resized_channel = nn.functional.interpolate(
             cropped_channel.unsqueeze(0).unsqueeze(0),
             size=size, mode="bilinear", align_corners=False)[0, 0]
         cropped_resized_channels.append(cropped_resized_channel)
