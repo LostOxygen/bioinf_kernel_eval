@@ -168,10 +168,23 @@ def augment_images(img: torch.Tensor, size: int) -> torch.Tensor:
     Returns:
         img: torch.Tensor - augmented image
     """
-    assert img.shape[1] >= size # height
-    assert img.shape[2] >= size # width
+    c, h, w = img.size()
 
-    for channel in range(img.shape[0]):
-        img[channel, :, :] = transforms.RandomResizedCrop(size=size)(img[channel, :, :])
+    # Randomly crop and resize each channel
+    if isinstance(size, int):
+        size = (size, size)
+    target_h, target_w = size
+    cropped_resized_channels = []
+    for channel in range(c):
+        i = torch.random.randint(0, h - target_h)
+        j = torch.random.randint(0, w - target_w)
+        cropped_channel = img[channel, i:i+target_h, j:j+target_w]
+        cropped_resized_channel = torch.nn.functional.interpolate(
+            cropped_channel.unsqueeze(0).unsqueeze(0),
+            size=size, mode="bilinear", align_corners=False)[0, 0]
+        cropped_resized_channels.append(cropped_resized_channel)
 
-    return img
+    # Stack the cropped and resized channels
+    cropped_resized_tensor = torch.stack(cropped_resized_channels)
+
+    return cropped_resized_tensor
