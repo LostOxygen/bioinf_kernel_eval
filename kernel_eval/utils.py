@@ -181,3 +181,29 @@ def augment_images(img: torch.Tensor, size: int) -> torch.Tensor:
             cropped_resized_image[batch, channel] = cropped_resized_channel
 
     return cropped_resized_image
+
+
+def normalize_spectral_data(img: torch.Tensor, num_channel: int, max_wavenumber: int, 
+                            max_integral: int=100, tiny: float=1e-9):
+    """
+    Normaizes spectral data
+    Parameters:
+        img [BxCxHxW]: torch.Tensor - image to apply normaization over all channels to
+        num_channels - number of channels in the image
+        max_wavenumber - the index of the channel with the highest avg pixel value
+        max_integral - tba
+        tiny - value for preventing zero divsion
+    
+    Returns:
+        img: torch.Tensor - normalized image
+        mask: torch.Tensor - tba
+    """
+    min_values = np.min(img, 2)
+    max_ratio = 1/(img[:,:,max_wavenumber]-min_values + tiny)
+    for wavenumber in range(num_channel):
+        img[:,:,wavenumber] = (img[:,:,wavenumber]-min_values)*max_ratio
+
+    mask_bad_spectra = np.trapz(img) > max_integral
+    img[mask_bad_spectra,:] = tiny
+
+    return img.astype(np.float32), mask_bad_spectra.astype(np.float32)
