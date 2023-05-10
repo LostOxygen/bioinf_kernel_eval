@@ -14,7 +14,8 @@ import webdataset as wds
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34, SmolNet
 from kernel_eval.datasets import process_data
 from kernel_eval.train import train_model, test_model
-from kernel_eval.utils import save_model, load_model, log_metrics, count_files, plot_metrics
+from kernel_eval.utils import (save_model, load_model, log_metrics,
+                               count_files, plot_metrics, augment_images)
 
 DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
                                "/prodi/hpcmem/spots_ftir/BC051111/",
@@ -87,8 +88,9 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
     print("[ creating model ]")
     tmp_data, _ = next(iter(train_loader))
+    tmp_data = augment_images(tmp_data, size=224)
     in_channels = tmp_data.shape[1]  # should be 442
-    (width, height) = (tmp_data.shape[2], tmp_data.shape[3])  # should be 400x400
+    (height, width) = (tmp_data.shape[2], tmp_data.shape[3])  # should be 224x224 or whatever
 
 
     # ---------------- Load and Train Models ---------------
