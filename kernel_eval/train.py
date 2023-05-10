@@ -7,7 +7,7 @@ from torch.utils.data import IterableDataset
 import pkbar
 from tqdm import tqdm
 
-from utils import augment_images
+from .utils import augment_images
 
 
 def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int) -> None:
