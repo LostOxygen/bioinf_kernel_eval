@@ -7,6 +7,8 @@ from torch.utils.data import IterableDataset
 import pkbar
 from tqdm import tqdm
 
+from utils import augment_images
+
 
 def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int) -> None:
     """
@@ -76,6 +78,9 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
 
         for batch_idx, (data, label) in enumerate(dataloader):
             data, label = data.to(device), label.float().to(device)
+            # apply augmentation to the images
+            data = augment_images(data, size=224)
+
             optimizer.zero_grad()
             output = model(data)
 

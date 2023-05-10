@@ -8,7 +8,6 @@ import argparse
 import os
 from typing import Final, List
 import torch
-from torchvision import transforms
 import torchsummary
 import webdataset as wds
 
@@ -78,13 +77,9 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     trainset_length, testset_length = count_files(DATA_PATHS, 0.8)
 
     print("[ loading training data ]")
-    train_transform = transforms.Compose([transforms.ToPILImage(),
-                                          transforms.RandomResizedCrop(224),
-                                          transforms.RandomHorizontalFlip(),
-                                          transforms.ToTensor()])
 
     train_data = wds.WebDataset(DATA_OUT+"train_data.tar").shuffle(1000).decode()
-    train_data = train_data.to_tuple("data.pyd", "label.pyd").map_tuple(train_transform)
+    train_data = train_data.to_tuple("data.pyd", "label.pyd")
 
     train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
     train_loader.length = trainset_length // batch_size
@@ -126,13 +121,8 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
 
     # -------- Test Models and Evaluate Kernels ------------
-    test_transform = transforms.Compose([transforms.ToPILImage(),
-                                         transforms.Resize(256),
-                                         transforms.CenterCrop(224),
-                                         transforms.ToTensor()])
-
     test_data = wds.WebDataset(DATA_OUT+"test_data.tar").shuffle(1000).decode()
-    test_data = test_data.to_tuple("data.pyd", "label.pyd").map_tuple(test_transform)
+    test_data = test_data.to_tuple("data.pyd", "label.pyd")
     test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
     test_loader.length = testset_length // batch_size
 

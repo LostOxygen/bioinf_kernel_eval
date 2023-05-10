@@ -8,6 +8,8 @@ from torch import nn
 import numpy as np
 from matplotlib import pyplot as plt
 
+from torchvision import transforms
+
 
 def save_model(model_path: str, model_name: str, depthwise: bool,
                batch_size: int, lr: float, epochs: int, model: nn.Module) -> None:
@@ -155,3 +157,21 @@ def count_files(data_paths: List[str], train_test_split: float) -> Tuple[int, in
         total_files += len(temp_file_list)
 
     return int(total_files*train_test_split), int(total_files*(1-train_test_split))
+
+def augment_images(img: torch.Tensor, size: int) -> torch.Tensor:
+    """
+    Apply augmentions to a given image in the following order: RandomResizedCrop
+    Parameters:
+        img [CxWxH]: torch.Tensor - image to apply augmentations to
+        size: int - pixel size of the resulting image
+    
+    Returns:
+        img: torch.Tensor - augmented image
+    """
+    assert img.shape[1] >= size # height
+    assert img.shape[2] >= size # width
+
+    for channel in range(img.shape[0]):
+        img[channel, :, :] = transforms.RandomResizedCrop(size=size)(img[channel, :, :])
+
+    return img
