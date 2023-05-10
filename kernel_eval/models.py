@@ -177,7 +177,7 @@ class ResNet(nn.Module):
     https://github.com/jarvislabsai/blog/blob/master/build_resnet34_pytorch/Building%20Resnet%20in%20PyTorch.ipynb
     """
 
-    def __init__(self, block: BasicBlock, layers: list[int], num_classes: int = 1000,
+    def __init__(self, block: BasicBlock, layers: list[int], num_classes: int = 1,
                  depthwise: bool = False, in_channels: int = 3, is_cifar: bool = False):
         super().__init__()
 
@@ -266,7 +266,7 @@ class SmolNet(nn.Module):
     def __init__(self, in_channels: int = 3, depthwise: bool = False,
                  num_classes: int = 10, is_cifar: bool = False):
         super().__init__()
-        num_neurons = 400 if is_cifar else 150544
+        num_neurons = 400 if is_cifar else 71424
         self.is_cifar = is_cifar
 
         if depthwise:
