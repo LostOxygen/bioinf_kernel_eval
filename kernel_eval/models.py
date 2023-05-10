@@ -261,12 +261,12 @@ def resnet34(**kwargs) -> ResNet:
 
 class SmolNet(nn.Module):
     """
-    Implementation of a small neural network architecture.
+    Implementation of a smol neural network architecture solely for the purpose of fast testing.
     """
     def __init__(self, in_channels: int = 3, depthwise: bool = False,
                  num_classes: int = 10, is_cifar: bool = False):
         super().__init__()
-        num_neurons = 400 if is_cifar else 71424
+        num_neurons = 400 if is_cifar else 44944
         self.is_cifar = is_cifar
 
         if depthwise:
