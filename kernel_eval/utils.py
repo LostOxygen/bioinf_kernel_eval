@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import List, Tuple
 import torch
 from torch import nn
+from torch.nn import functional as F
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -160,29 +161,23 @@ def augment_images(img: torch.Tensor, size: int) -> torch.Tensor:
     """
     Apply augmentions to a given image in the following order: RandomResizedCrop
     Parameters:
-        img [CxWxH]: torch.Tensor - image to apply augmentations to
+        img [BxCxHxW]: torch.Tensor - image to apply augmentations to
         size: int - pixel size of the resulting image
     
     Returns:
         img: torch.Tensor - augmented image
     """
-    c, h, w = img.size()
+    batch_size, channels, height, width = img.shape
+    target_h, target_w = size, size
+    cropped_resized_image = torch.zeros((batch_size, channels, size, size))
+    for batch in range(img.shape[0]):
+        for channel in range(channels):
+            i = random.randint(0, height - target_h)
+            j = random.randint(0, width - target_w)
+            cropped_channel = img[batch, channel, i:i+target_h, j:j+target_w]
+            cropped_resized_channel = F.interpolate(
+                cropped_channel.unsqueeze(0).unsqueeze(0),
+                size=size, mode="bilinear", align_corners=False)[0, 0]
+            cropped_resized_image[batch, channel] = cropped_resized_channel
 
-    # Randomly crop and resize each channel
-    if isinstance(size, int):
-        size = (size, size)
-    target_h, target_w = size
-    cropped_resized_channels = []
-    for channel in range(c):
-        i = random.randint(0, h - target_h)
-        j = random.randint(0, w - target_w)
-        cropped_channel = img[channel, i:i+target_h, j:j+target_w]
-        cropped_resized_channel = nn.functional.interpolate(
-            cropped_channel.unsqueeze(0).unsqueeze(0),
-            size=size, mode="bilinear", align_corners=False)[0, 0]
-        cropped_resized_channels.append(cropped_resized_channel)
-
-    # Stack the cropped and resized channels
-    cropped_resized_tensor = torch.stack(cropped_resized_channels)
-
-    return cropped_resized_tensor
+    return cropped_resized_image
