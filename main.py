@@ -21,8 +21,7 @@ DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
                                "/prodi/hpcmem/spots_ftir/CO1002b/",
                                "/prodi/hpcmem/spots_ftir/CO1004/",
                                "/prodi/hpcmem/spots_ftir/CO1801a/",
-                               "/prodi/hpcmem/spots_ftir/CO722/",
-                               "/prodi/hpcmem/spots_ftir/LC704/"]
+                               "/prodi/hpcmem/spots_ftir/CO722/"]
 
 DATA_OUT: Final[str] = "/prodi/hpcmem/spots_ftir/data_out/"
 
