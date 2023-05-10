@@ -266,7 +266,7 @@ class SmolNet(nn.Module):
     def __init__(self, in_channels: int = 3, depthwise: bool = False,
                  num_classes: int = 10, is_cifar: bool = False):
         super().__init__()
-        num_neurons = 400 if is_cifar else 69696
+        num_neurons = 400 if is_cifar else 44944
         self.is_cifar = is_cifar
 
         if depthwise:

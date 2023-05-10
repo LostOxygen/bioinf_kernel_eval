@@ -105,7 +105,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
                                           depthwise=depthwise, num_classes=1)
         case _: raise ValueError(f"Model {model} not supported")
 
-    torchsummary.summary(model, (in_channels, width, height), device="cpu")
+    torchsummary.summary(model, (in_channels, height, width), device="cpu")
     model = model.to(device)
 
     model_name = model_type + f"_{batch_size}bs_{learning_rate}lr_{epochs}ep"
