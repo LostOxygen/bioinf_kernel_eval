@@ -77,7 +77,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         adjust_learning_rate(optimizer, epoch, epochs, learning_rate)
 
         for batch_idx, (data, label) in enumerate(dataloader):
-            data, label = data, label.float().to(device)
+            label = label.float().to(device)
             # apply augmentation to the images
             data = augment_images(data, size=224).to(device)
 
