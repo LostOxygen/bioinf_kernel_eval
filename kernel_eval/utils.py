@@ -205,6 +205,6 @@ def normalize_spectral_data(img: torch.Tensor, num_channel: int, max_wavenumber:
             img[batch, wavenumber, :, :] = (img[batch, wavenumber, :, :] - min_values) * max_ratio
 
         mask_bad_spectra = torch.trapz(img, dim=1) > max_integral
-        img[:, mask_bad_spectra] = tiny
+        img[batch, :, mask_bad_spectra] = tiny
 
     return img.float()
