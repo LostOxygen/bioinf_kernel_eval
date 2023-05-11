@@ -94,7 +94,7 @@ class VGG(nn.Module):
                 layers.append(nn.BatchNorm2d(v))
                 layers.append(nn.ReLU(inplace=True))
                 in_channels = v
-
+        layers.append(nn.AvgPool2d(kernel_size=1, stride=1))
         return layers
 
 
