@@ -72,21 +72,18 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
         print("[ saving train/test data and labels ]")
         process_data(DATA_PATHS, DATA_OUT)
 
-    # count the train and test files for train/test split of 80%/20%
-    # trainset_length, testset_length = count_files(DATA_PATHS, 0.8)
-
-    print("[ loading training data ]")
-
-    train_data = wds.WebDataset(DATA_OUT+"train_data.tar").shuffle(1000).decode()
-    train_data = train_data.to_tuple("data.pyd", "label.pyd")
+    train_data = wds.WebDataset(
+        DATA_OUT+"train_data.tar").shuffle(100).decode().to_tuple("data.pyd", "label.pyd")
 
     train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
-    # train_loader.length = trainset_length // batch_size
 
     # load a single image to get the input shape
     # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
     print("[ creating model ]")
     tmp_data, labels = next(iter(train_loader))
+    in_channels = tmp_data.shape[1]  # should be 442
+    (width, height) = (tmp_data.shape[2], tmp_data.shape[3])  
+
     print("labels shape", labels.shape)
     print(labels)
     exit()
