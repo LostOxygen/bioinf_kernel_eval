@@ -89,9 +89,8 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     print("[ creating model ]")
     images, labels  = next(iter(trainloader))
     print("label shape ",labels.shape)
-    for label in labels:
-        print("my label")
-        print(label)
+    print("labels",labels)
+    exit()
 
     in_channels = images.shape[1]  # should be 442
     (width, height) = (images.shape[2], images.shape[3])  # should be 400x400
