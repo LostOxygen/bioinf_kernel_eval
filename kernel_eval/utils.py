@@ -197,13 +197,14 @@ def normalize_spectral_data(img: torch.Tensor, num_channel: int, max_wavenumber:
     Returns:
         img: torch.Tensor - normalized image
     """
-    min_values, _ = torch.min(img, 0)
-    max_ratio = 1 / (img[max_wavenumber, :, :] - min_values + tiny)
+    for batch in range(img.shape[0]):
+        min_values, _ = torch.min(img, 1)
+        max_ratio = 1 / (img[batch, max_wavenumber, :, :] - min_values + tiny)
 
-    for wavenumber in range(num_channel):
-        img[wavenumber, :, :] = (img[wavenumber, :, :] - min_values) * max_ratio
+        for wavenumber in range(num_channel):
+            img[batch, wavenumber, :, :] = (img[batch, wavenumber, :, :] - min_values) * max_ratio
 
-    mask_bad_spectra = torch.trapz(img, dim=0) > max_integral
-    img[:, mask_bad_spectra] = tiny
+        mask_bad_spectra = torch.trapz(img, dim=1) > max_integral
+        img[:, mask_bad_spectra] = tiny
 
     return img.float()
