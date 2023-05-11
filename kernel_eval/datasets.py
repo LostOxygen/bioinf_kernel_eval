@@ -38,6 +38,9 @@ def process_data(data_paths: List[str], data_out: str) -> None:
     # create a progress bar with tqdm
     pbar = tqdm(total=total_files)
 
+    pos = 0
+    neg = 0
+
     # creates two tar files for train and test data, where 80% of the data is used for training
     with (
         wds.TarWriter(data_out+"train_data.tar") as train_sink,
@@ -46,6 +49,8 @@ def process_data(data_paths: List[str], data_out: str) -> None:
         for data_path in data_paths:
             file_list = glob(data_path+"data*.npy")
             labels = np.load(data_path+"label.npy")
+            pos +=np.count_nonzero(labels >= 0)
+            neg +=np.count_nonzero(labels < 0)
 
             for idx, file in enumerate(file_list):
                 curr_data = np.load(file)
@@ -74,6 +79,8 @@ def process_data(data_paths: List[str], data_out: str) -> None:
                     test_key_counter += 1
                 pbar.update(1)
     pbar.close()
+    print("pos", pos)
+    print("neg", neg)
 
 
 class StreamingDataset(Dataset[Any]):
