@@ -78,11 +78,15 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
 
         for batch_idx, (data, label) in enumerate(dataloader):
             label = label.unsqueeze(0).float().to(device)
-            # normalize images
-            mean_pixel_value_every_dimension = torch.mean(data, (0,1))
+
+            # find amidi-band by searching for the highest mean pixel value over all channels
+            mean_pixel_value_every_dimension = torch.mean(data, (1, 2))
             max_wavenumber = torch.argmax(mean_pixel_value_every_dimension)
+
+            # normalize the data
             data = normalize_spectral_data(data, num_channel=data.shape[1],
                                            max_wavenumber=max_wavenumber)
+
             # apply augmentation to the images
             data = augment_images(data, size=224).to(device)
 
