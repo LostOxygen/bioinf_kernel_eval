@@ -14,8 +14,7 @@ import webdataset as wds
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34, SmolNet
 from kernel_eval.datasets import process_data
 from kernel_eval.train import train_model, test_model
-from kernel_eval.utils import (save_model, load_model, log_metrics,
-                               count_files, plot_metrics, augment_images)
+from kernel_eval.utils import (save_model, load_model, log_metrics)
 
 DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
                                "/prodi/hpcmem/spots_ftir/BC051111/",
