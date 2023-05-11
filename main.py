@@ -73,7 +73,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
         process_data(DATA_PATHS, DATA_OUT)
 
     # count the train and test files for train/test split of 80%/20%
-    trainset_length, testset_length = count_files(DATA_PATHS, 0.8)
+    # trainset_length, testset_length = count_files(DATA_PATHS, 0.8)
 
     print("[ loading training data ]")
 
@@ -81,7 +81,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     train_data = train_data.to_tuple("data.pyd", "label.pyd")
 
     train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
-    train_loader.length = trainset_length // batch_size
+    # train_loader.length = trainset_length // batch_size
 
     # load a single image to get the input shape
     # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
@@ -90,7 +90,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     print("labels shape", labels.shape)
     print(labels)
     exit()
-    tmp_data = augment_images(tmp_data, size=224)
+    # tmp_data = augment_images(tmp_data, size=224)
     in_channels = tmp_data.shape[1]  # should be 442
     (height, width) = (tmp_data.shape[2], tmp_data.shape[3])  # should be 224x224 or whatever
 
@@ -127,7 +127,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     test_data = wds.WebDataset(DATA_OUT+"test_data.tar").shuffle(1000).decode()
     test_data = test_data.to_tuple("data.pyd", "label.pyd")
     test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
-    test_loader.length = testset_length // batch_size
+    # test_loader.length = testset_length // batch_size
 
     if eval_only:
         train_accuracy = 0.0
@@ -139,7 +139,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
 
     log_metrics(train_acc=train_accuracy, test_acc=test_accuracy, model_name=model_name)
-    plot_metrics(train_acc=train_accs, train_loss=train_losses, model_name=model_name)
+    # plot_metrics(train_acc=train_accs, train_loss=train_losses, model_name=model_name)
 
     end = time.perf_counter()
     duration = (round(end - start) / 60.) / 60.
