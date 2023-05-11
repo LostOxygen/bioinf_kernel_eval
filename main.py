@@ -87,7 +87,12 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     # load a single image to get the input shape
     # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
     print("[ creating model ]")
-    images, _  = next(iter(trainloader))
+    images, labels  = next(iter(trainloader))
+    print("label shape ",labels.shape)
+    for label in labels:
+        print("my label")
+        print(label)
+
     in_channels = images.shape[1]  # should be 442
     (width, height) = (images.shape[2], images.shape[3])  # should be 400x400
 
