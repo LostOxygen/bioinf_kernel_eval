@@ -101,17 +101,20 @@ class SingleFileLoader(Dataset[Any]):
             #seperate for each folder and only take what you need here (depending on test or not)
             num_samples_in_folder = len(data_in_current_folder)
 
-            #add to toal num_of_samples for __len__() function
-            self.num_samples += num_samples_in_folder
-
             #split data in 80/20
             # Calculate the split index based on the ratio
             split_index = int(num_samples_in_folder * 0.8)
             
             if is_train:
-                self.data.append(data_in_current_folder[:split_index])
+                training_data_current_folder = data_in_current_folder[:split_index]
+                #add to toal num_of_samples for __len__() function
+                self.num_samples += len(training_data_current_folder)
+                self.data.append(training_data_current_folder)
             else:
-                self.data.append(data_in_current_folder[split_index:])
+                test_data_current_folder = data_in_current_folder[split_index:]
+                #add to toal num_of_samples for __len__() function
+                self.num_samples += len(test_data_current_folder)
+                self.data.append(test_data_current_folder)
 
     def __len__(self) -> int:
         return self.num_samples
