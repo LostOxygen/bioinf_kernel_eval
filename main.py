@@ -11,8 +11,10 @@ import torch
 import torchsummary
 import webdataset as wds
 
+from torch.utils.data import DataLoader
+
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34, SmolNet
-from kernel_eval.datasets import process_data
+from kernel_eval.datasets import SingleFileLoader
 from kernel_eval.train import train_model, test_model
 from kernel_eval.utils import (save_model, load_model, log_metrics,
                                count_files, plot_metrics, augment_images)
@@ -78,11 +80,15 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     print("[ loading training data ]")
 
-    train_data = wds.WebDataset(DATA_OUT+"train_data.tar").shuffle(1000).decode()
-    train_data = train_data.to_tuple("data.pyd", "label.pyd")
+    #train_data = wds.WebDataset(DATA_OUT+"train_data.tar").shuffle(1000).decode()
+    #train_data = train_data.to_tuple("data.pyd", "label.pyd")
 
-    train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
-    train_loader.length = trainset_length // batch_size
+    train_data = SingleFileLoader(data_paths=DATA_PATHS, is_train=True)
+
+    #train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
+    train_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True, num_workers=2)
+    
+    #train_loader.length = trainset_length // batch_size    
 
     # load a single image to get the input shape
     # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
@@ -122,10 +128,16 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
 
     # -------- Test Models and Evaluate Kernels ------------
-    test_data = wds.WebDataset(DATA_OUT+"test_data.tar").shuffle(1000).decode()
-    test_data = test_data.to_tuple("data.pyd", "label.pyd")
-    test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
-    test_loader.length = testset_length // batch_size
+    #test_data = wds.WebDataset(DATA_OUT+"test_data.tar").shuffle(1000).decode()
+    #test_data = test_data.to_tuple("data.pyd", "label.pyd")
+    #test_loader = wds.WebLoader((test_data.batched(batch_size)), batch_size=None, num_workers=1)
+    #test_loader.length = testset_length // batch_size
+
+    
+    test_data = SingleFileLoader(data_paths=DATA_PATHS, is_train=False)
+
+    test_loader = DataLoader(dataset=test_data, batch_size=batch_size, shuffle=True, num_workers=2)
+    
 
     if eval_only:
         train_accuracy = 0.0
