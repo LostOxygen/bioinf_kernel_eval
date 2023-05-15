@@ -10,6 +10,12 @@ from torchvision.transforms import transforms
 import webdataset as wds
 from tqdm import tqdm
 
+import tarfile
+import io
+import random
+import torch
+from torch.utils.data import Dataset, DataLoader
+
 def process_data(data_paths: List[str], data_out: str) -> None:
     """
     Helper function to load the data from the given paths with their corresponding labels and
@@ -101,6 +107,27 @@ class StreamingDataset(Dataset[Any]):
 
     def __getitem__(self, idx: int) -> Tensor:
         # load and convert the numpy data to a tensor
-        data_item = torch.tensor(torch.from_numpy(self.data[idx])).to(self.device)
-        label = torch.tensor(torch.from_numpy(self.data[idx])).to(self.device)
+        data_item = torch.tensor(torch.from_numpy(self.data[idx]))
+        label = torch.tensor(torch.from_numpy(self.data[idx]))
         return data_item, label
+
+
+class CustomDataset(Dataset):
+    def __init__(self, root_dirs):
+        self.data_files = []
+        self.label_file = []
+        for root_dir in root_dirs:
+            files = sorted([f for f in root_dir.glob('*.npy') if f.name != 'labels.npy'])
+            self.data_files.extend(files)
+            labels = root_dir / 'labels.npy'
+            self.label_file.extend(labels)
+        self.labels = np.load(self.label_file)
+
+    def __len__(self):
+        return len(self.data_files)
+
+    def __getitem__(self, idx):
+        data = np.load(self.data_files[idx])
+        label = self.labels[idx]
+        sample = {'data': torch.from_numpy(data), 'label': torch.from_numpy(label)}
+        return sample

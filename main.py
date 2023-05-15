@@ -10,9 +10,10 @@ from typing import Final, List
 import torch
 import torchsummary
 import webdataset as wds
+from torch.utils.data import DataLoader
 
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34, SmolNet
-from kernel_eval.datasets import process_data
+from kernel_eval.datasets import process_data, CustomDataset
 from kernel_eval.train import train_model, test_model
 from kernel_eval.utils import (save_model, load_model, log_metrics)
 
@@ -22,6 +23,25 @@ DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
                                "/prodi/hpcmem/spots_ftir/CO1004/",
                                "/prodi/hpcmem/spots_ftir/CO1801a/",
                                "/prodi/hpcmem/spots_ftir/CO722/"]
+
+import numpy as np
+paths = ["/prodi/hpcmem/spots_ftir/LC704/",
+                               "/prodi/hpcmem/spots_ftir/BC051111/",
+                               "/prodi/hpcmem/spots_ftir/CO1002b/",
+                               "/prodi/hpcmem/spots_ftir/CO1004/",
+                               "/prodi/hpcmem/spots_ftir/CO1801a/",
+                               "/prodi/hpcmem/spots_ftir/CO722/"]
+pos = 0
+neg = 0
+for path in paths:
+    data = np.load(path+"label.npy")
+    
+    num_ones = np.count_nonzero(data == 1)
+    num_zeros = np.count_nonzero(data == 0)
+    pos += num_ones
+    neg += num_zeros
+    print("pos", pos)
+    print("neg", neg)
 
 DATA_OUT: Final[str] = "/prodi/hpcmem/spots_ftir/data_out/"
 
@@ -77,12 +97,17 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     print("[ loading training data ]")
 
-    train_data = wds.WebDataset(DATA_OUT+"train_data.tar").shuffle(1000).decode()
-    train_data = train_data.to_tuple("data.pyd", "label.pyd")
+    dataset = CustomDataset(paths)
+    train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
-    
 
-    train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
+    # train_data = wds.WebDataset(DATA_OUT+"train_data.tar").shuffle(1000).decode()
+    # train_data = train_data.to_tuple("data.pyd", "label.pyd")
+
+    # train_loader = wds.WebLoader((train_data.batched(batch_size)), batch_size=None, num_workers=2)
+
+    # train_loader = TarFileDataLoader('train.tar', batch_size=32, shuffle=True)
+
     # train_loader.length = trainset_length // batch_size
 
     # load a single image to get the input shape
@@ -91,7 +116,6 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     tmp_data, labels = next(iter(train_loader))
     print("labels shape", labels.shape)
     print(labels)
-    exit()
     # tmp_data = augment_images(tmp_data, size=224)
     in_channels = tmp_data.shape[1]  # should be 442
     (height, width) = (tmp_data.shape[2], tmp_data.shape[3])  # should be 224x224 or whatever
