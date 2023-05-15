@@ -117,7 +117,7 @@ class CustomDataset(Dataset):
         self.data_files = []
         self.label_file = []
         for root_dir in root_dirs:
-            files = sorted([f for f in root_dir.glob('*.npy') if f.name != 'labels.npy'])
+            files = sorted([f for f in glob(root_dir+ '*.npy') if f.name != 'labels.npy'])
             self.data_files.extend(files)
             labels = root_dir / 'labels.npy'
             self.label_file.extend(labels)
