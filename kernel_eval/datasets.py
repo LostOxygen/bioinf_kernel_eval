@@ -139,5 +139,7 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         data = np.load(self.data_files[idx])
         label = self.labels[idx]
+        data = np.asarray(data)
+        label = np.asarray(label)
         sample = {'data': torch.from_numpy(data), 'label': torch.from_numpy(label)}
         return sample
