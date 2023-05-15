@@ -122,7 +122,7 @@ class SingleFileLoader(Dataset[Any]):
     def __getitem__(self, idx: int) -> Tensor:
         # load and convert the numpy data to a tensor
         data_entry_with_label = self.data[idx]
-        data_np = data_entry_with_label[0]
+        data_np = np.load(data_entry_with_label[0])
         label_tensor = data_entry_with_label[1]
 
         data_tensor = torch.from_numpy(np.moveaxis(data_np, -1, 0)).float()
