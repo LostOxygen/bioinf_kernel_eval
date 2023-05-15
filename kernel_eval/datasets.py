@@ -141,5 +141,7 @@ class CustomDataset(Dataset):
         label = self.labels[idx]
         data = np.asarray(data)
         label = np.asarray(label)
-        sample = {'data': torch.from_numpy(data), 'label': torch.from_numpy(label)}
+        data_tensor = torch.from_numpy(data).clone().detach().requires_grad_(True)
+        label_tensor = torch.from_numpy(label).clone().detach().requires_grad_(True)
+        sample = {'data': data_tensor, 'label': label_tensor}
         return sample
