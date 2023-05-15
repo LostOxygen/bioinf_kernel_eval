@@ -7,7 +7,7 @@ from torch.utils.data import IterableDataset
 import pkbar
 from tqdm import tqdm
 
-from .utils import augment_images
+from .utils import augment_images, normalize_spectral_data
 
 
 def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int) -> None:
@@ -77,7 +77,16 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         adjust_learning_rate(optimizer, epoch, epochs, learning_rate)
 
         for batch_idx, (data, label) in enumerate(dataloader):
-            label = label.float().to(device)
+            label = label.unsqueeze(0).float().to(device)
+
+            # find amidi-band by searching for the highest mean pixel value over all channels
+            mean_pixel_value_every_dimension = torch.mean(data, (1, 2))
+            max_wavenumber = torch.argmax(mean_pixel_value_every_dimension)
+
+            # normalize the data
+            data = normalize_spectral_data(data, num_channel=data.shape[1],
+                                           max_wavenumber=max_wavenumber)
+
             # apply augmentation to the images
             data = augment_images(data, size=224).to(device)
 
@@ -126,7 +135,9 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
         correct = 0
         total = 0
         for _, (data, label) in tqdm(enumerate(dataloader), total=dataloader.length):
-            data, label = data.to(device), label.to(device)
+            label = label.to(device)
+            # crop the images to the correct size
+            data = augment_images(data, size=224).to(device)
             output = model(data)
             _, predicted = output.max(1)
             total += label.size(0)

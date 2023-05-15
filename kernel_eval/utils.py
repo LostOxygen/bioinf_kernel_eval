@@ -183,12 +183,12 @@ def augment_images(img: torch.Tensor, size: int) -> torch.Tensor:
     return cropped_resized_image
 
 
-def normalize_spectral_data(img: torch.Tensor, num_channel: int, max_wavenumber: int, 
-                            max_integral: int=100, tiny: float=1e-9):
+def normalize_spectral_data(img: torch.Tensor, num_channel: int, max_wavenumber: int,
+                            max_integral: int=100, tiny: float=1e-9) -> torch.Tensor:
     """
-    Normaizes spectral data
+    Normaizes the image spectral data
     Parameters:
-        img [BxCxHxW]: torch.Tensor - image to apply normaization over all channels to
+        img [BxCxHxW]: torch.Tensor - image to apply normalization over all channels to
         num_channels - number of channels in the image
         max_wavenumber - the index of the channel with the highest avg pixel value
         max_integral - tba
@@ -196,14 +196,15 @@ def normalize_spectral_data(img: torch.Tensor, num_channel: int, max_wavenumber:
     
     Returns:
         img: torch.Tensor - normalized image
-        mask: torch.Tensor - tba
     """
-    min_values = np.min(img, 2)
-    max_ratio = 1/(img[:,:,max_wavenumber]-min_values + tiny)
-    for wavenumber in range(num_channel):
-        img[:,:,wavenumber] = (img[:,:,wavenumber]-min_values)*max_ratio
+    for batch in range(img.shape[0]):
+        min_values, _ = torch.min(img, 1)
+        max_ratio = 1 / (img[batch, max_wavenumber, :, :] - min_values + tiny)
 
-    mask_bad_spectra = np.trapz(img) > max_integral
-    img[mask_bad_spectra,:] = tiny
+        for wavenumber in range(num_channel):
+            img[batch, wavenumber, :, :] = (img[batch, wavenumber, :, :] - min_values) * max_ratio
 
-    return img.astype(np.float32), mask_bad_spectra.astype(np.float32)
+        mask_bad_spectra = torch.trapz(img, dim=1) > max_integral
+        img[batch, :, mask_bad_spectra.squeeze()] = tiny
+
+    return img.float()

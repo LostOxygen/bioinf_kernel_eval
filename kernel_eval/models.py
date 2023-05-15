@@ -44,15 +44,17 @@ class VGG(nn.Module):
     Code adapted from: https://github.com/kuangliu/pytorch-cifar/blob/master/models/vgg.py
     """
 
-    def __init__(self, vgg_cfg: List[Union[str, int]], num_classes: int = 1000,
+    def __init__(self, vgg_cfg: List[Union[str, int]], num_classes: int = 1,
                  depthwise: bool = False, in_channels: int = 3, is_cifar: bool = False) -> None:
         super().__init__()
         self.features = self._make_layers(vgg_cfg, depthwise, in_channels)
         self.classifier = nn.Linear(512, num_classes)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.is_cifar = is_cifar
 
     def forward(self, x_val: Tensor) -> Tensor:
         out = self.features(x_val)
+        out = self.avgpool(out)
         out = torch.flatten(out, 1)
         out = self.classifier(out)
         if self.is_cifar:
