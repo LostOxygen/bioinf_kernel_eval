@@ -80,6 +80,7 @@ class SingleFileLoader(Dataset[Any]):
         super().__init__()
         # data_paths need to be a list of paths to the actual numpy data arrays
         self.data_paths = data_paths
+        self.num_samples = 0
 
         for data_path in data_paths:
             file_list = glob(data_path+"data*.npy")
