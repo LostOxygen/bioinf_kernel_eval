@@ -31,17 +31,6 @@ paths = ["/prodi/hpcmem/spots_ftir/LC704/",
                                "/prodi/hpcmem/spots_ftir/CO1004/",
                                "/prodi/hpcmem/spots_ftir/CO1801a/",
                                "/prodi/hpcmem/spots_ftir/CO722/"]
-pos = 0
-neg = 0
-for path in paths:
-    data = np.load(path+"label.npy")
-    
-    num_ones = np.count_nonzero(data == 1)
-    num_zeros = np.count_nonzero(data == 0)
-    pos += num_ones
-    neg += num_zeros
-    print("pos", pos)
-    print("neg", neg)
 
 DATA_OUT: Final[str] = "/prodi/hpcmem/spots_ftir/data_out/"
 

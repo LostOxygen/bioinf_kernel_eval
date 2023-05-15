@@ -115,13 +115,23 @@ class StreamingDataset(Dataset[Any]):
 class CustomDataset(Dataset):
     def __init__(self, root_dirs):
         self.data_files = []
-        self.label_file = []
+        self.labels = []
+        label_files = []
+
         for root_dir in root_dirs:
-            files = sorted([f for f in glob(root_dir+ '*.npy') if f.name != 'labels.npy'])
+            result = glob(root_dir+ '*.npy')
+            files = [file for file in result if 'label.npy' not in file]
             self.data_files.extend(files)
-            labels = root_dir / 'labels.npy'
-            self.label_file.extend(labels)
-        self.labels = np.load(self.label_file)
+
+            # all label.npy file paths
+            tmp = root_dir + 'label.npy'
+            label_files.append(tmp)
+
+        # concatenate all in labels
+        all_labels = []
+        for file in label_files:
+                all_labels.append(np.load(file))
+        self.labels = np.concatenate(all_labels)
 
     def __len__(self):
         return len(self.data_files)
