@@ -79,53 +79,60 @@ class SingleFileLoader(Dataset[Any]):
     def __init__(self, data_paths: List[str], is_train: bool, transform: transforms=None):
         super().__init__()
         # data_paths need to be a list of paths to the actual numpy data arrays
-        self.data_paths = data_paths
-        self.num_samples = 0
-        self.data = []
+        self.data_paths: List[str] = data_paths
+        self.num_samples: int = 0
+        self.data: List = []
+        self.transform: torch.transforms = transform
 
         for data_path in data_paths:
             file_list = glob(data_path+"data*.npy")
             labels = np.load(data_path+"label.npy")
             data_in_current_folder = []
 
+            # build tuples for each file_path and it's corresponding label
             for idx, file in enumerate(file_list):
-                curr_file_path = file
-                curr_label = torch.tensor(labels[idx])
+                curr_label = torch.tensor(labels[idx]).long()
+                # tuple of (file_path: str, label: torch.Tensor)
+                data_in_current_folder.append((file, curr_label))
 
-                entry = []
-                entry.append(curr_file_path)
-                entry.append(curr_label)
-
-                data_in_current_folder.append(entry)
-
-            #seperate for each folder and only take what you need here (depending on test or not)
+            # take the number of the files in the current folder, since for train/test-splitting
+            # we only want to take certain amount of files from each folder
             num_samples_in_folder = len(data_in_current_folder)
 
-            #split data in 80/20
-            # Calculate the split index based on the ratio
+            # split data in 80/20
+            # Calculate the split index based on the train/test ratio
             split_index = int(num_samples_in_folder * 0.8)
-            
+
             if is_train:
                 training_data_current_folder = data_in_current_folder[:split_index]
-                #add to toal num_of_samples for __len__() function
+                # add to total num_of_samples for __len__() function
                 self.num_samples += len(training_data_current_folder)
-                self.data.append(training_data_current_folder)
+                # append the trainingset tuples to the data list
+                for data_entry in training_data_current_folder:
+                    self.data.append(data_entry)
             else:
                 test_data_current_folder = data_in_current_folder[split_index:]
-                #add to toal num_of_samples for __len__() function
+                # add to total num_of_samples for __len__() function
                 self.num_samples += len(test_data_current_folder)
-                self.data.append(test_data_current_folder)
+                # append the testset tuples to the data list
+                for data_entry in training_data_current_folder:
+                    self.data.append(data_entry)
+
 
     def __len__(self) -> int:
         return self.num_samples
 
+
     def __getitem__(self, idx: int) -> Tensor:
         # load and convert the numpy data to a tensor
         print(idx)
-        data_entry_with_label = self.data[idx]
-        data_np = np.load(data_entry_with_label[0])
-        label_tensor = data_entry_with_label[1]
+        data_np = np.load(self.data[idx][0])
+        label_tensor = self.data[idx][1]
 
-        data_tensor = torch.from_numpy(np.moveaxis(data_np, -1, 0)).float()
-        
+        # move the channel dimension to the first dimension for PyTorch  (H,W,C) -> (C,H,W)
+        data_np = np.moveaxis(data_np, -1, 0)
+
+        # convert to tensor
+        data_tensor = torch.from_numpy(data_np).float()
+
         return data_tensor, label_tensor
