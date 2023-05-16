@@ -65,7 +65,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
         model.train()
-        kbar = pkbar.Kbar(target=dataloader.length, epoch=epoch, num_epochs=epochs,
+        kbar = pkbar.Kbar(target=len(dataloader), epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
 
         correct = 0
@@ -134,7 +134,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
         model.eval()
         correct = 0
         total = 0
-        for _, (data, label) in tqdm(enumerate(dataloader), total=dataloader.length):
+        for _, (data, label) in tqdm(enumerate(dataloader), total=len(dataloader)):
             label = label.to(device)
             # crop the images to the correct size
             data = augment_images(data, size=224).to(device)
