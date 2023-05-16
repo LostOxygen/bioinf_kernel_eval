@@ -161,7 +161,7 @@ def augment_images(img: torch.Tensor, size: int) -> torch.Tensor:
     """
     Apply augmentions to a given image in the following order: RandomResizedCrop
     Parameters:
-        img [BxCxHxW]: torch.Tensor - image to apply augmentations to
+        img [CxHxW]: torch.Tensor - image to apply augmentations to
         size: int - pixel size of the resulting image
     
     Returns:
@@ -188,7 +188,7 @@ def normalize_spectral_data(img: torch.Tensor, num_channel: int, max_wavenumber:
     """
     Normaizes the image spectral data
     Parameters:
-        img [BxCxHxW]: torch.Tensor - image to apply normalization over all channels to
+        img [CxHxW]: torch.Tensor - image to apply normalization over all channels to
         num_channels - number of channels in the image
         max_wavenumber - the index of the channel with the highest avg pixel value
         max_integral - tba
@@ -203,7 +203,7 @@ def normalize_spectral_data(img: torch.Tensor, num_channel: int, max_wavenumber:
     for wavenumber in range(num_channel):
         img[wavenumber, :, :] = (img[wavenumber, :, :] - min_values) * max_ratio
 
-    mask_bad_spectra = torch.trapz(img, dim=1) > max_integral
+    mask_bad_spectra = torch.trapz(img, dim=0) > max_integral
     img[:, mask_bad_spectra.squeeze()] = tiny
 
     return img.float()
