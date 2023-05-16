@@ -131,7 +131,7 @@ class SingleFileDataset(Dataset[Any]):
 
 
     def __getitem__(self, idx: int) -> Tensor:
-        # load and convert the numpy data to a tensor
+        # load the image from the corresponding file_path and it's corresponding label
         data_np = np.load(self.data[idx][0])
         label_tensor = self.data[idx][1]
 
@@ -139,19 +139,19 @@ class SingleFileDataset(Dataset[Any]):
         data_np = np.moveaxis(data_np, -1, 0)
 
         # convert to tensor
-        data_tensor = torch.from_numpy(data_np).float()
+        data_t = torch.from_numpy(data_np).float()
 
         if self.normalize:
             # find amidi-band by searching for the highest mean pixel value over all channels
-            mean_pixel_value_every_dimension = torch.mean(data, (1, 2))
+            mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
             max_wavenumber = torch.argmax(mean_pixel_value_every_dimension)
 
             # normalize the data
-            data = normalize_spectral_data(data, num_channel=data.shape[1],
-                                            max_wavenumber=max_wavenumber)
+            data_t = normalize_spectral_data(data_t, num_channel=data_t.shape[1],
+                                             max_wavenumber=max_wavenumber)
 
         if self.augment:
             # apply augmentation to the images
-            data = augment_images(data, size=224)
+            data_t = augment_images(data_t, size=224)
 
-        return data_tensor, label_tensor
+        return data_t, label_tensor
