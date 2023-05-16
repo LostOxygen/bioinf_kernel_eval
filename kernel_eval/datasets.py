@@ -10,6 +10,9 @@ from torchvision.transforms import transforms
 import webdataset as wds
 from tqdm import tqdm
 
+from .utils import augment_images, normalize_spectral_data
+
+
 def process_data(data_paths: List[str], data_out: str) -> None:
     """
     Helper function to load the data from the given paths with their corresponding labels and
@@ -71,17 +74,21 @@ def process_data(data_paths: List[str], data_out: str) -> None:
     pbar.close()
 
 
-class SingleFileLoader(Dataset[Any]):
+class SingleFileDataset(Dataset[Any]):
     """
     Dataset class implementation which loads a single image at a time
     """
 
-    def __init__(self, data_paths: List[str], is_train: bool, transform: transforms=None):
+    def __init__(self, data_paths: List[str], is_train: bool, transform: transforms=None,
+                 augment: bool = False, normalize: bool = False):
         super().__init__()
         # data_paths need to be a list of paths to the actual numpy data arrays
         self.data_paths: List[str] = data_paths
         self.num_samples: int = 0
         self.data: List = []
+        self.is_train: bool = is_train
+        self.augment: bool = augment
+        self.normalize: bool = normalize
         self.transform: torch.transforms = transform
 
         for data_path in data_paths:
@@ -103,7 +110,7 @@ class SingleFileLoader(Dataset[Any]):
             # Calculate the split index based on the train/test ratio
             split_index = int(num_samples_in_folder * 0.8)
 
-            if is_train:
+            if self.is_train:
                 training_data_current_folder = data_in_current_folder[:split_index]
                 # add to total num_of_samples for __len__() function
                 self.num_samples += len(training_data_current_folder)
@@ -133,5 +140,18 @@ class SingleFileLoader(Dataset[Any]):
 
         # convert to tensor
         data_tensor = torch.from_numpy(data_np).float()
+
+        if self.normalize:
+            # find amidi-band by searching for the highest mean pixel value over all channels
+            mean_pixel_value_every_dimension = torch.mean(data, (1, 2))
+            max_wavenumber = torch.argmax(mean_pixel_value_every_dimension)
+
+            # normalize the data
+            data = normalize_spectral_data(data, num_channel=data.shape[1],
+                                            max_wavenumber=max_wavenumber)
+
+        if self.augment:
+            # apply augmentation to the images
+            data = augment_images(data, size=224)
 
         return data_tensor, label_tensor
