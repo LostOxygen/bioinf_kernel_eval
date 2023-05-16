@@ -125,7 +125,6 @@ class SingleFileLoader(Dataset[Any]):
 
     def __getitem__(self, idx: int) -> Tensor:
         # load and convert the numpy data to a tensor
-        print(idx)
         data_np = np.load(self.data[idx][0])
         label_tensor = self.data[idx][1]
 
