@@ -197,7 +197,7 @@ def normalize_spectral_data(img: torch.Tensor, num_channel: int, max_wavenumber:
     Returns:
         img: torch.Tensor - normalized image
     """
-    min_values, _ = torch.min(img, 1)
+    min_values, _ = torch.min(img, 0)
     max_ratio = 1 / (img[max_wavenumber, :, :] - min_values + tiny)
 
     for wavenumber in range(num_channel):
