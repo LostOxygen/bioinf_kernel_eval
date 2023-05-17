@@ -79,7 +79,8 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
 
             optimizer.zero_grad()
             output = model(data)
-            output = output.squeeze(-1)  # squeeze the output to fit the label shape
+            # squeeze the output to fit the label shape
+            output = output.squeeze(-1)
 
             loss = loss_fn(output, label)
             loss.backward()
@@ -123,10 +124,12 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
         correct = 0
         total = 0
         for _, (data, label) in tqdm(enumerate(dataloader), total=len(dataloader)):
-            data, label = data.to(device), label.to(device)
+            data, label = data.to(device), label.float().to(device)
 
             output = model(data)
-            _, predicted = output.max(1)
+            # squeeze the output to fit the label shape
+            output = output.squeeze(-1)
+            _, predicted = output.max(-1)
             total += label.size(0)
             correct += predicted.eq(label).sum().item()
         print(f"Test Accuracy: {100. * correct / total}%")
