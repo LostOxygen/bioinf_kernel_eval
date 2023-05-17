@@ -151,7 +151,9 @@ class SingleFileDataset(Dataset[Any]):
             data_t = normalize_spectral_data(data_t, num_channel=data_t.shape[1],
                                              max_wavenumber=max_wavenumber)
 
-            print("normalized data: ", data_t)
+            print("normalized data min val: ", np.min(data_t))
+            print("normalized data max val: ", np.max(data_t))
+
         if self.augment:
             # apply augmentation to the images
             data_t = augment_images(data_t, size=224)
