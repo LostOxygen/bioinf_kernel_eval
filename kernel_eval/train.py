@@ -79,12 +79,13 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
 
             optimizer.zero_grad()
             output = model(data)
+            output = output.squeeze(-1)  # squeeze the output to fit the label shape
 
             loss = loss_fn(output, label)
             loss.backward()
 
             optimizer.step()
-            _, predicted = output.max(1)
+            _, predicted = output.max(-1)
 
             # calculate the current running loss as well as the total accuracy
             # and update the progressbar accordingly
