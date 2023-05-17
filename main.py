@@ -31,7 +31,7 @@ MODEL_OUTPUT_PATH: Final[str] = "./models/"
 
 
 def main(gpu: int, batch_size: int, epochs: int, model_type: str,
-         depthwise: bool, eval_only: bool, learning_rate: float) -> None:
+         depthwise: bool, eval_only: bool, learning_rate: float, normalize: bool) -> None:
     """
     Main function to start the training, testing and evaluation procedures
         
@@ -64,6 +64,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     print(f"## Epochs: {epochs}")
     print(f"## Model: {model_type}")
     print(f"## Depthwise: {depthwise}")
+    print(f"## Normalization: {normalize}")
     print("#"*60)
     print()
 
@@ -71,7 +72,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     # ---------------- Create/Load Datasets ----------------
     print("[ loading training data ]")
     train_data = SingleFileDataset(data_paths=DATA_PATHS, is_train=True,
-                                   augment=True, normalize=True)
+                                   augment=True, normalize=normalize)
 
     train_loader = DataLoader(dataset=train_data, batch_size=batch_size,
                               shuffle=True, num_workers=2)

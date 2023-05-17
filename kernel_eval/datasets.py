@@ -156,7 +156,7 @@ class SingleFileDataset(Dataset[Any]):
 
             #print("normalized data min val: ", torch.min(data_t))
             #print("normalized data mean val: ", torch.mean(data_t))
-            #print("normalized data max val: ", torch.max(data_t))
+            #Pprint("normalized data max val: ", torch.max(data_t))
 
         if self.augment:
             # apply augmentation to the images
