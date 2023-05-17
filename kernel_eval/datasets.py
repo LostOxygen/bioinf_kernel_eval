@@ -122,7 +122,7 @@ class SingleFileDataset(Dataset[Any]):
                 # add to total num_of_samples for __len__() function
                 self.num_samples += len(test_data_current_folder)
                 # append the testset tuples to the data list
-                for data_entry in training_data_current_folder:
+                for data_entry in test_data_current_folder:
                     self.data.append(data_entry)
 
 
