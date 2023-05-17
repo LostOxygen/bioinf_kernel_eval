@@ -71,7 +71,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     # ---------------- Create/Load Datasets ----------------
     print("[ loading training data ]")
     train_data = SingleFileDataset(data_paths=DATA_PATHS, is_train=True,
-                                   augment=True, normalize=True)
+                                   augment=True, normalize=False)
 
     train_loader = DataLoader(dataset=train_data, batch_size=batch_size,
                               shuffle=True, num_workers=2)
