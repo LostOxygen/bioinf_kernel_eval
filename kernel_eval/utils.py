@@ -167,6 +167,11 @@ def augment_images(img: torch.Tensor, size: int) -> torch.Tensor:
     Returns:
         img: torch.Tensor - augmented image
     """
+    if len(img.shape) >= 4:
+        # when the images are already stacked to a batch, there is no need to
+        # apply augmentations anymore
+        return img
+
     channels, height, width = img.shape
     target_h, target_w = size, size
     cropped_resized_image = torch.zeros((channels, size, size))
