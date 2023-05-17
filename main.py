@@ -152,7 +152,7 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     parser.add_argument("--eval_only", "-ev", help="evaluates the model without training",
                         action="store_true", default=False)
-    parser.add_argument("--normalize", "-d", help="enables normalization",
+    parser.add_argument("--normalize", "-no", help="enables normalization",
                         action="store_true", default=False)
     args = parser.parse_args()
     main(**vars(args))
