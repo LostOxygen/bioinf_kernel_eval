@@ -140,7 +140,8 @@ class SingleFileDataset(Dataset[Any]):
 
         # convert to tensor
         data_t = torch.from_numpy(data_np).float()
-
+        print("data: ", data_t)
+        
         if self.normalize:
             # find amidi-band by searching for the highest mean pixel value over all channels
             mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
