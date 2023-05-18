@@ -134,4 +134,4 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
             correct += predicted.eq(label).sum().item()
         print(f"Test Accuracy: {100. * correct / total}%")
 
-    return (100. * correct / total)
+    return 100. * correct / total
