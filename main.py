@@ -118,20 +118,19 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     test_data = SingleFileDataset(data_paths=DATA_PATHS, is_train=False,
                                   augment=True, normalize=False)
 
-    test_loader = DataLoader(dataset=test_data, batch_size=batch_size, shuffle=True, num_workers=2)
+    test_loader = DataLoader(dataset=test_data, batch_size=1, shuffle=True, num_workers=2)
 
 
     if eval_only:
-        train_accuracy = 0.0
         model = load_model(MODEL_OUTPUT_PATH, model_type, depthwise,
                            batch_size, learning_rate, epochs, model)
 
     print("[ evaluate model ]")
     test_accuracy = test_model(model, test_loader, device)
 
-
-    log_metrics(train_acc=train_accuracy, test_acc=test_accuracy, model_name=model_name)
-    plot_metrics(train_acc=train_accs, train_loss=train_losses, model_name=model_name)
+    if not eval_only:
+        log_metrics(train_acc=train_accuracy, test_acc=test_accuracy, model_name=model_name)
+        plot_metrics(train_acc=train_accs, train_loss=train_losses, model_name=model_name)
 
     end = time.perf_counter()
     duration = (round(end - start) / 60.) / 60.
