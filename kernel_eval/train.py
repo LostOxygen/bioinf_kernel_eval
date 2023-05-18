@@ -63,7 +63,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
         model.train()
-        kbar = pkbar.Kbar(target=len(dataloader), epoch=epoch, num_epochs=epochs,
+        kbar = pkbar.Kbar(target=len(dataloader)-1, epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
 
         correct = 0
@@ -102,7 +102,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         train_accs.append(sum(epoch_acc) / len(epoch_acc))
         train_losses.append(sum(epoch_loss) / len(epoch_loss))
 
-    return model, 100. * correct / total, train_accs, train_losses
+    return model, (100. * correct / total), train_accs, train_losses
 
 
 def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu") -> float:
@@ -123,7 +123,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
         model.eval()
         correct = 0
         total = 0
-        for _, (data, label) in tqdm(enumerate(dataloader), total=len(dataloader)):
+        for _, (data, label) in tqdm(enumerate(dataloader), total=len(dataloader)-1):
             data, label = data.to(device), label.float().to(device)
 
             output = model(data)
@@ -134,4 +134,4 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
             correct += predicted.eq(label).sum().item()
         print(f"Test Accuracy: {100. * correct / total}%")
 
-    return 100. * correct / total
+    return (100. * correct / total)
