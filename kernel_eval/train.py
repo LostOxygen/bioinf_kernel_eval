@@ -86,7 +86,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
             loss.backward()
 
             optimizer.step()
-            _, predicted = output.max(-1)
+            predicted = output.round()
 
             # calculate the current running loss as well as the total accuracy
             # and update the progressbar accordingly
@@ -129,7 +129,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
             output = model(data)
             # squeeze the output to fit the label shape
             output = output.squeeze(-1)
-            _, predicted = output.max(-1)
+            predicted = output.round()
             total += label.size(0)
             correct += predicted.eq(label).sum().item()
         print(f"Test Accuracy: {100. * correct / total}%")
