@@ -46,6 +46,7 @@ fi
 
 printf "\n##########################################################"
 printf "\n## Found $LOADED_GPUS GPU(s) on this machine"
+printf "\n## Batch size: $BATCH_SIZE | Learning rate: $LEARNING_RATE | Epochs: $EPOCHS" 
 printf "\n##########################################################\n"
 
 python main.py --model_type vgg11 --batch_size "$BATCH_SIZE" --learning_rate "$LEARNING_RATE" --epochs "$EPOCHS" --gpu 0 && python main.py --model_type vgg11 --batch_size "$BATCH_SIZE" --learning_rate "$LEARNING_RATE" --epochs "$EPOCHS" --gpu 0 --depthwise && python main.py --model_type resnet34 --batch_size "$BATCH_SIZE" --learning_rate "$LEARNING_RATE" --epochs "$EPOCHS" --gpu 0 &
