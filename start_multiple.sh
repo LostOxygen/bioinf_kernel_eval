@@ -18,7 +18,7 @@ do
 			LEARNING_RATE="$2"
 			shift
 			;;
-		-a | --epochs )
+		-e | --epochs )
 			EPOCHS="$2"
 			shift
 			;;
