@@ -15,8 +15,7 @@ from torch.utils.data import DataLoader
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34, SmolNet
 from kernel_eval.datasets import SingleFileDataset
 from kernel_eval.train import train_model, test_model
-from kernel_eval.utils import (save_model, load_model, log_metrics,
-                               plot_metrics, augment_images)
+from kernel_eval.utils import load_model, log_metrics, plot_metrics, augment_images
 
 DATA_PATHS: Final[List[str]] = ["/prodi/hpcmem/spots_ftir/LC704/",
                                 "/prodi/hpcmem/spots_ftir/BC051111/",
@@ -106,8 +105,10 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     if not eval_only:
         print("[ train model ]")
         model, train_accuracy, train_accs, train_losses = train_model(model, train_loader,
-                                                                      learning_rate, epochs, batch_size, device, model_type, depthwise, MODEL_OUTPUT_PATH)
-
+                                                                      learning_rate, epochs,
+                                                                      batch_size, device,
+                                                                      model_type, depthwise,
+                                                                      MODEL_OUTPUT_PATH)
     del train_loader
 
     # -------- Test Models and Evaluate Kernels ------------
