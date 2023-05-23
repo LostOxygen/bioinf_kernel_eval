@@ -104,11 +104,11 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     if not eval_only:
         print("[ train model ]")
-        model, train_accuracy, train_accs, train_losses = train_model(model, train_loader,
-                                                                      learning_rate, epochs,
-                                                                      batch_size, device,
-                                                                      model_type, depthwise,
-                                                                      MODEL_OUTPUT_PATH)
+        model, best_acc, train_accs, train_losses = train_model(model, train_loader,
+                                                                learning_rate, epochs,
+                                                                batch_size, device,
+                                                                model_type, depthwise,
+                                                                MODEL_OUTPUT_PATH)
     del train_loader
 
     # -------- Test Models and Evaluate Kernels ------------
@@ -126,7 +126,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     test_accuracy = test_model(model, test_loader, device)
 
     if not eval_only:
-        log_metrics(train_acc=train_accuracy,
+        log_metrics(train_acc=best_acc,
                     test_acc=test_accuracy, model_name=model_name)
         plot_metrics(train_acc=train_accs,
                      train_loss=train_losses, model_name=model_name)

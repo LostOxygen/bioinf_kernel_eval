@@ -74,7 +74,10 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
     # initialize model, loss function, optimizer and so on
     train_accs: List[float] = []
     train_losses: List[float] = []
+
     best_acc: float = 0.0
+    best_model: torch.Module = model.to(device)
+    best_epoch: int = 0
 
     model = model.to(device)
     loss_fn = nn.BCELoss()
@@ -128,9 +131,11 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
 
         if train_accs[-1] > best_acc:
             best_acc = train_accs[-1]
+            best_model = model
+            best_epoch = epoch
             save_model(mpath_out, model_type, depthwise, batch_size, learning_rate, epochs, model)
 
-    return model, (100. * correct / total), train_accs, train_losses
+    return best_model, train_accs[best_epoch], train_accs, train_losses
 
 
 def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu") -> float:
