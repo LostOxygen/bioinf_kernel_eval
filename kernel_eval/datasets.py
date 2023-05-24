@@ -140,11 +140,7 @@ class SingleFileDataset(Dataset[Any]):
 
         # convert to tensor
         data_t = torch.from_numpy(data_np).float()
-        #print("data: ", data_t)
-        #print("data min val: ", torch.min(data_t))
-        #print("data mean val: ", torch.mean(data_t))
-        #print("data max val: ", torch.max(data_t))
-        
+
         if self.normalize:
             # find amidi-band by searching for the highest mean pixel value over all channels
             mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
@@ -153,10 +149,6 @@ class SingleFileDataset(Dataset[Any]):
             # normalize the data
             data_t = normalize_spectral_data(data_t, num_channel=data_t.shape[1],
                                              max_wavenumber=max_wavenumber)
-
-            #print("normalized data min val: ", torch.min(data_t))
-            #print("normalized data mean val: ", torch.mean(data_t))
-            #Pprint("normalized data max val: ", torch.max(data_t))
 
         if self.augment:
             # apply augmentation to the images
