@@ -138,12 +138,9 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--gpu", "-g", help="sets the train device var", type=int, default=0)
-    parser.add_argument("--batch_size", "-bs",
-                        help="specifies batch size", type=int, default=4)
-    parser.add_argument(
-        "--epochs", "-e", help="specifies the train epochs", type=int, default=100)
+    parser.add_argument("--gpu", "-g", help="sets the train device var", type=int, default=0)
+    parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=4)
+    parser.add_argument("--epochs", "-e", help="specifies the train epochs", type=int, default=100)
     parser.add_argument("--learning_rate", "-lr", help="specifies the learning rate",
                         type=float, default=0.1)
     parser.add_argument("--model_type", "-m", help="specifies the model architecture",
