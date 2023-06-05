@@ -93,6 +93,9 @@ class SingleFileDataset(Dataset[Any]):
 
         for data_path in data_paths:
             file_list = glob(data_path+"data*.npy")
+            # sort the files according to their name index
+            file_list = sorted(file_list, key=lambda x: int(x.split("data")[1].split(".npy")[0]))
+            # load the corresponding labels
             labels = np.load(data_path+"label.npy")
             data_in_current_folder = []
 
@@ -144,7 +147,7 @@ class SingleFileDataset(Dataset[Any]):
         #print("data min val: ", torch.min(data_t))
         #print("data mean val: ", torch.mean(data_t))
         #print("data max val: ", torch.max(data_t))
-        
+
         if self.normalize:
             # find amidi-band by searching for the highest mean pixel value over all channels
             mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
