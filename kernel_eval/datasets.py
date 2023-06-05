@@ -129,7 +129,7 @@ class SingleFileDataset(Dataset[Any]):
             elif self.loading_option == SingleFileDatasetLoadingOptions.VALIDATION:
                 validation_data_current_folder = data_in_current_folder[num_train:num_train + num_validation]
                 # add to total num_of_samples for __len__() function
-                self.num_samples += len(test_data_current_folder)
+                self.num_samples += len(validation_data_current_folder)
                 # append the testset tuples to the data list
                 for data_entry in test_data_current_folder:
                     self.data.append(data_entry)
