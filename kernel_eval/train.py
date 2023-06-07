@@ -33,16 +33,16 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
         param_group["lr"] = new_lr
 
 
-def train_model(model: nn.Module, dataloader: IterableDataset,
+def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_dataloader: IterableDataset,
                 learning_rate: float, epochs: int, batch_size: int,
                 device: str = "cpu", model_type: str = "no_model", depthwise: bool = True,
-                mpath_out: str = "./models/" ) -> Union[nn.Module, float, List[float], List[float]]:
+                mpath_out: str = "./models/") -> Union[nn.Module, float, List[float], List[float]]:
     """
     Function to train a given model with a given dataset
     
     Parameters:
         model: nn.Module - the model to train
-        dataloader: IterableDataset - the dataset to train on
+        train_dataloader: IterableDataset - the dataset to train on
         learning_rate: float - the learning rate of SGD
         epochs: int - the number of training epochs
         batch_size: int - the batch size to calculate the progress bar
@@ -75,7 +75,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
     train_accs: List[float] = []
     train_losses: List[float] = []
 
-    best_acc: float = 0.0
+    best_validation_acc: float = 0.0
     best_model: torch.Module = model.to(device)
     best_epoch: int = 0
 
@@ -88,7 +88,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
         model.train()
-        kbar = pkbar.Kbar(target=len(dataloader)-1, epoch=epoch, num_epochs=epochs,
+        kbar = pkbar.Kbar(target=len(train_dataloader) - 1, epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
 
         correct = 0
@@ -99,7 +99,7 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         # adjust the learning rate
         # adjust_learning_rate(optimizer, epoch, epochs, learning_rate)
 
-        for batch_idx, (data, label) in enumerate(dataloader):
+        for batch_idx, (data, label) in enumerate(train_dataloader):
             data, label = data.to(device), label.float().to(device)
 
             optimizer.zero_grad()
@@ -129,8 +129,11 @@ def train_model(model: nn.Module, dataloader: IterableDataset,
         train_accs.append(sum(epoch_acc) / len(epoch_acc))
         train_losses.append(sum(epoch_loss) / len(epoch_loss))
 
-        if train_accs[-1] > best_acc:
-            best_acc = train_accs[-1]
+        # for every epoch use the validation set to check if this is the best model yet
+        validation_acc = test_model(model, validation_dataloader, device)
+
+        if validation_acc > best_validation_acc:
+            best_validation_acc = validation_acc
             best_model = model
             best_epoch = epoch
             save_model(mpath_out, model_type, depthwise, batch_size, learning_rate, epochs, model)
