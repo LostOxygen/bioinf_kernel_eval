@@ -74,18 +74,20 @@ def process_data(data_paths: List[str], data_out: str) -> None:
                 pbar.update(1)
     pbar.close()
 
+
 class SingleFileDatasetLoadingOptions(Enum):
-    TRAIN = 'train'
-    TEST = 'test'
-    VALIDATION = 'validation'
+    TRAIN = "train"
+    TEST = "test"
+    VALIDATION = "validation"
+
 
 class SingleFileDataset(Dataset[Any]):
     """
     Dataset class implementation which loads a single image at a time
     """
 
-    def __init__(self, data_paths: List[str], loading_option: SingleFileDatasetLoadingOptions, transform: transforms=None,
-                 augment: bool = False, normalize: bool = False):
+    def __init__(self, data_paths: List[str], loading_option: SingleFileDatasetLoadingOptions,
+                 transform: transforms=None, augment: bool = False, normalize: bool = False):
         super().__init__()
         # data_paths need to be a list of paths to the actual numpy data arrays
         self.data_paths: List[str] = data_paths
