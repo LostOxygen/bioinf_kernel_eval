@@ -9,6 +9,7 @@ from torch.utils.data import Dataset
 from torchvision.transforms import transforms
 import webdataset as wds
 from tqdm import tqdm
+from enum import Enum
 
 from .utils import augment_images, normalize_spectral_data
 
@@ -73,23 +74,31 @@ def process_data(data_paths: List[str], data_out: str) -> None:
                 pbar.update(1)
     pbar.close()
 
+class SingleFileDatasetLoadingOptions(Enum):
+    TRAIN = 'train'
+    TEST = 'test'
+    VALIDATION = 'validation'
 
 class SingleFileDataset(Dataset[Any]):
     """
     Dataset class implementation which loads a single image at a time
     """
 
-    def __init__(self, data_paths: List[str], is_train: bool, transform: transforms=None,
+    def __init__(self, data_paths: List[str], loading_option: SingleFileDatasetLoadingOptions, transform: transforms=None,
                  augment: bool = False, normalize: bool = False):
         super().__init__()
         # data_paths need to be a list of paths to the actual numpy data arrays
         self.data_paths: List[str] = data_paths
         self.num_samples: int = 0
         self.data: List = []
-        self.is_train: bool = is_train
+        self.loading_option: SingleFileDatasetLoadingOptions = loading_option
         self.augment: bool = augment
         self.normalize: bool = normalize
         self.transform: torch.transforms = transform
+
+        train_ratio = 0.8
+        validation_ratio = 0.1
+        test_ratio = 0.1
 
         for data_path in data_paths:
             file_list = glob(data_path+"data*.npy")
@@ -109,25 +118,32 @@ class SingleFileDataset(Dataset[Any]):
             # we only want to take certain amount of files from each folder
             num_samples_in_folder = len(data_in_current_folder)
 
-            # split data in 80/20
-            # Calculate the split index based on the train/test ratio
-            split_index = int(num_samples_in_folder * 0.8)
+            num_train = int(train_ratio * num_samples_in_folder)
+            num_validation = int(validation_ratio * num_samples_in_folder)
 
-            if self.is_train:
-                training_data_current_folder = data_in_current_folder[:split_index]
+            if self.loading_option == SingleFileDatasetLoadingOptions.TRAIN:
+                training_data_current_folder = data_in_current_folder[:num_train]
                 # add to total num_of_samples for __len__() function
                 self.num_samples += len(training_data_current_folder)
                 # append the trainingset tuples to the data list
                 for data_entry in training_data_current_folder:
                     self.data.append(data_entry)
-            else:
-                test_data_current_folder = data_in_current_folder[split_index:]
+
+            elif self.loading_option == SingleFileDatasetLoadingOptions.VALIDATION:
+                validation_data_current_folder = data_in_current_folder[num_train:num_train + num_validation]
+                # add to total num_of_samples for __len__() function
+                self.num_samples += len(validation_data_current_folder)
+                # append the testset tuples to the data list
+                for data_entry in validation_data_current_folder:
+                    self.data.append(data_entry)
+
+            elif self.loading_option == SingleFileDatasetLoadingOptions.TEST:
+                test_data_current_folder = data_in_current_folder[num_train + num_validation:]
                 # add to total num_of_samples for __len__() function
                 self.num_samples += len(test_data_current_folder)
                 # append the testset tuples to the data list
                 for data_entry in test_data_current_folder:
                     self.data.append(data_entry)
-
 
     def __len__(self) -> int:
         return self.num_samples
