@@ -162,8 +162,9 @@ class SingleFileDataset(Dataset[Any]):
 
         if self.normalize:
             # find amidi-band by searching for the highest mean pixel value over all channels
-            mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
-            max_wavenumber = torch.argmax(mean_pixel_value_every_dimension)
+            # mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
+            # max_wavenumber = torch.argmax(mean_pixel_value_every_dimension)
+            max_wavenumber = 359 # hardcoded amidband
 
             # normalize the data
             data_t = normalize_spectral_data(data_t, num_channel=data_t.shape[1],
