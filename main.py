@@ -70,7 +70,8 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     # ---------------- Create/Load Datasets ----------------
     print("[ loading training data ]")
-    train_data = SingleFileDataset(data_paths=DATA_PATHS, loading_option=SingleFileDatasetLoadingOptions.TRAIN,
+    train_data = SingleFileDataset(data_paths=DATA_PATHS,
+                                   loading_option=SingleFileDatasetLoadingOptions.TRAIN,
                                    augment=True, normalize=normalize)
 
     train_loader = DataLoader(dataset=train_data, batch_size=batch_size,
@@ -80,7 +81,8 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
                                         loading_option=SingleFileDatasetLoadingOptions.VALIDATION,
                                         augment=True, normalize=False)
 
-    validation_loader = DataLoader(dataset=validation_data, batch_size=1, shuffle=True, num_workers=2)
+    validation_loader = DataLoader(dataset=validation_data, batch_size=1,
+                                   shuffle=True, num_workers=2)
 
     # load a single image to get the input shape
     # train data has the shape (batch_size, channels, width, height) -> (BATCH_SIZE, 442, 400, 400)
@@ -111,14 +113,18 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     if not eval_only:
         print("[ train model ]")
-        model, best_acc, train_accs, train_losses = train_model(model, train_loader, validation_loader,
-                                                                learning_rate, epochs, batch_size, device,
-                                                                model_type, depthwise, MODEL_OUTPUT_PATH)
+        model, best_acc, train_accs, train_losses = train_model(model, train_loader,
+                                                                validation_loader, learning_rate,
+                                                                epochs, batch_size, device,
+                                                                model_type, depthwise,
+                                                                MODEL_OUTPUT_PATH)
     del train_loader
 
     # -------- Test Models and Evaluate Kernels ------------
-    test_data = SingleFileDataset(data_paths=DATA_PATHS, loading_option=SingleFileDatasetLoadingOptions.TEST,
-                                  augment=True, normalize=False)
+    test_data = SingleFileDataset(data_paths=DATA_PATHS,
+                                  loading_option=SingleFileDatasetLoadingOptions.TEST,
+                                  augment=True,
+                                  normalize=False)
 
     test_loader = DataLoader(
         dataset=test_data, batch_size=1, shuffle=True, num_workers=2)
