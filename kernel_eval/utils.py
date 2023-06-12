@@ -176,9 +176,10 @@ def augment_images(img: torch.Tensor, size: int) -> torch.Tensor:
     target_h, target_w = size, size
     cropped_resized_image = torch.zeros((channels, size, size))
 
+    i = random.randint(0, height - target_h)
+    j = random.randint(0, width - target_w)
+
     for channel in range(channels):
-        i = random.randint(0, height - target_h)
-        j = random.randint(0, width - target_w)
         cropped_channel = img[channel, i:i+target_h, j:j+target_w]
         cropped_resized_channel = F.interpolate(
             cropped_channel.unsqueeze(0).unsqueeze(0),
