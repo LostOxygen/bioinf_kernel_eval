@@ -147,7 +147,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", "-bs", help="specifies batch size", type=int, default=4)
     parser.add_argument("--epochs", "-e", help="specifies the train epochs", type=int, default=100)
     parser.add_argument("--learning_rate", "-lr", help="specifies the learning rate",
-                        type=float, default=0.1)
+                        type=float, default=0.0001)
     parser.add_argument("--model_type", "-m", help="specifies the model architecture",
                         type=str, default="vgg11")
     parser.add_argument("--depthwise", "-d", help="enables depthwise conv",
