@@ -8,6 +8,7 @@ import pkbar
 from tqdm import tqdm
 from kernel_eval.utils import save_model
 import wandb
+import numpy as np
 
 
 def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int) -> None:
@@ -31,6 +32,22 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
         new_lr /= 10
     for param_group in optimizer.param_groups:
         param_group["lr"] = new_lr
+
+
+def recall(y_true, y_pred):
+    true_positives = torch.sum(y_true * y_pred)
+    possible_positives = torch.sum(y_true)
+    return true_positives / (possible_positives + 1e-9)
+
+def precision(y_true, y_pred):
+    true_positives = torch.sum(y_true * y_pred)
+    predicted_positives = torch.sum(y_pred)
+    return true_positives / (predicted_positives + 1e-9)
+
+def f1_score(y_true, y_pred):
+    prec = precision(y_true, y_pred)
+    rec = recall(y_true, y_pred)
+    return 2 * (prec * rec) / (prec + rec + 1e-9)
 
 
 def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_dataloader: IterableDataset,
@@ -60,7 +77,7 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
 
     wandb.init(
         # set the wandb project where this run will be logged
-        project="kernel_eval",
+        project="kernel_optimization",
 
         # track hyperparameters and run metadata
         config={
@@ -68,6 +85,7 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
         "architecture": model_type,
         "dataset": "bioimages",
         "epochs": str(epochs),
+        "depthwise": depthwise
         }
     )
 
@@ -87,6 +105,12 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
         # every epoch a new progressbar is created
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
+
+        epoch_loss = []
+        epoch_acc = []
+        epoch_recall = []
+        epoch_precision = []
+        epoch_f1 = []
         model.train()
         kbar = pkbar.Kbar(target=len(train_dataloader) - 1, epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
@@ -121,6 +145,13 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
             correct += predicted.eq(label).sum().item()
             epoch_acc.append(100. * correct / total)
 
+            # Calculate metrics
+            y_true = label.sum()
+            y_pred = predicted.sum()
+            epoch_recall.append(recall(y_true, y_pred))
+            epoch_precision.append(precision(y_true, y_pred))
+            epoch_f1.append(f1_score(y_true, y_pred))
+
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
             wandb.log({"train_acc": 100 * correct/total, "train_loss": running_loss/(batch_idx+1)})
@@ -128,6 +159,13 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
         # append the accuracy and loss of the current epoch to the lists
         train_accs.append(sum(epoch_acc) / len(epoch_acc))
         train_losses.append(sum(epoch_loss) / len(epoch_loss))
+
+        # Calculate average metrics for the epoch
+        avg_recall = np.mean(epoch_recall)
+        avg_precision = np.mean(epoch_precision)
+        avg_f1 = np.mean(epoch_f1)
+        wandb.log({"train_recall": avg_recall, "train_precision": avg_precision, "train_f1": avg_f1})
+
 
         # for every epoch use the validation set to check if this is the best model yet
         validation_acc = test_model(model, validation_dataloader, device)

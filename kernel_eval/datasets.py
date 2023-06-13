@@ -1,5 +1,6 @@
 """library module for dataset implementations and helper functions"""
 import os
+import random
 from typing import Any, List
 from glob import glob
 import torch
@@ -57,6 +58,7 @@ def process_data(data_paths: List[str], data_out: str) -> None:
                 curr_data = np.moveaxis(curr_data, -1, 0)
                 curr_label = torch.tensor(labels[idx])
 
+
                 if idx < len(file_list)*0.8:
                     train_sink.write({
                         "__key__": f"sample{train_key_counter:06d}",
@@ -113,6 +115,8 @@ class SingleFileDataset(Dataset[Any]):
                 curr_label = torch.tensor(labels[idx]).long()
                 # tuple of (file_path: str, label: torch.Tensor)
                 data_in_current_folder.append((file, curr_label))
+            
+            random.shuffle(data_in_current_folder)
 
             # take the number of the files in the current folder, since for train/test-splitting
             # we only want to take certain amount of files from each folder
@@ -162,12 +166,22 @@ class SingleFileDataset(Dataset[Any]):
 
         if self.normalize:
             # find amidi-band by searching for the highest mean pixel value over all channels
-            mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
-            max_wavenumber = torch.argmax(mean_pixel_value_every_dimension)
 
-            # normalize the data
-            data_t = normalize_spectral_data(data_t, num_channel=data_t.shape[1],
-                                             max_wavenumber=max_wavenumber)
+            # normalization by peak
+            mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
+            range = 20
+            estimated_peak_point = 359
+            peak_interval = mean_pixel_value_every_dimension[estimated_peak_point-range:estimated_peak_point+range]
+            peak_point = torch.max(peak_interval)
+            print(peak_point)
+            data_t /= peak_point
+
+            # mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
+            # max_wavenumber = torch.argmax(mean_pixel_value_every_dimension)
+
+            # # normalize the data
+            # data_t = normalize_spectral_data(data_t, num_channel=data_t.shape[1],
+            #                                  max_wavenumber=max_wavenumber)
 
         if self.augment:
             # apply augmentation to the images
