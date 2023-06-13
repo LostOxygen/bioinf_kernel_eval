@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import List, Tuple
 import torch
 from torch import nn
-from torch.nn import functional as F
 import numpy as np
 from matplotlib import pyplot as plt
 
