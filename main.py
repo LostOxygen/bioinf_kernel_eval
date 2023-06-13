@@ -79,7 +79,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     validation_data = SingleFileDataset(data_paths=DATA_PATHS,
                                         loading_option=SingleFileDatasetLoadingOptions.VALIDATION,
-                                        augment=True, normalize=False)
+                                        augment=True, normalize=normalize)
 
     validation_loader = DataLoader(dataset=validation_data, batch_size=1,
                                    shuffle=True, num_workers=2)
@@ -124,7 +124,7 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     test_data = SingleFileDataset(data_paths=DATA_PATHS,
                                   loading_option=SingleFileDatasetLoadingOptions.TEST,
                                   augment=True,
-                                  normalize=False)
+                                  normalize=normalize)
 
     test_loader = DataLoader(
         dataset=test_data, batch_size=1, shuffle=True, num_workers=2)
