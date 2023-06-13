@@ -99,8 +99,7 @@ class SingleFileDataset(Dataset[Any]):
         self.transform: torch.transforms = transform
 
         train_ratio = 0.8
-        validation_ratio = 0.1
-        test_ratio = 0.1
+        test_val_ratio = 0.1
 
         for data_path in data_paths:
             file_list = glob(data_path+"data*.npy")
@@ -121,7 +120,7 @@ class SingleFileDataset(Dataset[Any]):
             num_samples_in_folder = len(data_in_current_folder)
 
             num_train = int(train_ratio * num_samples_in_folder)
-            num_validation = int(validation_ratio * num_samples_in_folder)
+            num_tv = int(test_val_ratio * num_samples_in_folder)
 
             if self.loading_option == SingleFileDatasetLoadingOptions.TRAIN:
                 training_data_current_folder = data_in_current_folder[:num_train]
@@ -132,7 +131,7 @@ class SingleFileDataset(Dataset[Any]):
                     self.data.append(data_entry)
 
             elif self.loading_option == SingleFileDatasetLoadingOptions.VALIDATION:
-                validation_data_current_folder = data_in_current_folder[num_train:num_train + num_validation]
+                validation_data_current_folder = data_in_current_folder[num_train:num_train+num_tv]
                 # add to total num_of_samples for __len__() function
                 self.num_samples += len(validation_data_current_folder)
                 # append the testset tuples to the data list
@@ -140,12 +139,13 @@ class SingleFileDataset(Dataset[Any]):
                     self.data.append(data_entry)
 
             elif self.loading_option == SingleFileDatasetLoadingOptions.TEST:
-                test_data_current_folder = data_in_current_folder[num_train + num_validation:]
+                test_data_current_folder = data_in_current_folder[num_train + num_tv:]
                 # add to total num_of_samples for __len__() function
                 self.num_samples += len(test_data_current_folder)
                 # append the testset tuples to the data list
                 for data_entry in test_data_current_folder:
                     self.data.append(data_entry)
+
 
     def __len__(self) -> int:
         return self.num_samples
