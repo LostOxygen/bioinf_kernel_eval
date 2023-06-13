@@ -153,10 +153,12 @@ if __name__ == "__main__":
     parser.add_argument("--model_type", "-m", help="specifies the model architecture",
                         type=str, default="vgg11")
     parser.add_argument("--depthwise", "-d", help="enables depthwise conv",
-                        action="store_true", default=False)
+                        action="store_true", default=True)
     parser.add_argument("--eval_only", "-ev", help="evaluates the model without training",
                         action="store_true", default=False)
     parser.add_argument("--normalize", "-no", help="enables normalization",
-                        action="store_true", default=False)
+                        action="store_true", default=True)
     args = parser.parse_args()
     main(**vars(args))
+
+    #python main.py --gpu 0 --batch_size 8 --learning_rate 0.0001 --epochs 50 --model_type vgg11 --depthwise True --normalize True
