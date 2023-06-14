@@ -9,6 +9,7 @@ from tqdm import tqdm
 from kernel_eval.utils import save_model
 import wandb
 import numpy as np
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
 def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int) -> None:
@@ -99,18 +100,18 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
 
     model = model.to(device)
     loss_fn = nn.BCELoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4, momentum=0.9)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.9, patience=5, verbose=True)
+
 
     for epoch in range(0, epochs):
         # every epoch a new progressbar is created
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
 
-        epoch_loss = []
-        epoch_acc = []
-        epoch_recall = []
-        epoch_precision = []
-        epoch_f1 = []
+        TP = 0
+        FP = 0
+        FN = 0
         model.train()
         kbar = pkbar.Kbar(target=len(train_dataloader) - 1, epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
@@ -122,6 +123,10 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
         epoch_acc = []
         # adjust the learning rate
         # adjust_learning_rate(optimizer, epoch, epochs, learning_rate)
+
+        # After the training loop for each epoch
+        avg_epoch_loss = sum(epoch_loss) / len(epoch_loss)
+        scheduler.step(avg_epoch_loss)
 
         for batch_idx, (data, label) in enumerate(train_dataloader):
             data, label = data.to(device), label.float().to(device)
@@ -146,11 +151,10 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
             epoch_acc.append(100. * correct / total)
 
             # Calculate metrics
-            y_true = label.sum()
-            y_pred = predicted.sum()
-            epoch_recall.append(recall(y_true, y_pred))
-            epoch_precision.append(precision(y_true, y_pred))
-            epoch_f1.append(f1_score(y_true, y_pred))
+            # Update TP, FP, and FN counters
+            TP += ((predicted == 1) & (label == 1)).sum().item()
+            FP += ((predicted == 1) & (label == 0)).sum().item()
+            FN += ((predicted == 0) & (label == 1)).sum().item()
 
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
@@ -161,10 +165,12 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
         train_losses.append(sum(epoch_loss) / len(epoch_loss))
 
         # Calculate average metrics for the epoch
-        avg_recall = np.mean(epoch_recall)
-        avg_precision = np.mean(epoch_precision)
-        avg_f1 = np.mean(epoch_f1)
-        wandb.log({"train_recall": avg_recall, "train_precision": avg_precision, "train_f1": avg_f1})
+        # Calculate precision, recall, and F1 score
+        precision = TP / (TP + FP) if TP + FP > 0 else 0
+        recall = TP / (TP + FN) if TP + FN > 0 else 0
+        f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
+
+        wandb.log({"train_recall": recall, "train_precision": precision, "train_f1": f1_score})
 
 
         # for every epoch use the validation set to check if this is the best model yet

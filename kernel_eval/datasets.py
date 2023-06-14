@@ -168,13 +168,19 @@ class SingleFileDataset(Dataset[Any]):
             # find amidi-band by searching for the highest mean pixel value over all channels
 
             # normalization by peak
+            
             mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
+            max_index_of_max_pixel_val = torch.argmax(mean_pixel_value_every_dimension)
+            print(max_index_of_max_pixel_val)
             range = 20
             estimated_peak_point = 359
             peak_interval = mean_pixel_value_every_dimension[estimated_peak_point-range:estimated_peak_point+range]
             peak_point = torch.max(peak_interval)
-            print(peak_point)
             data_t /= peak_point
+
+            # substract mean along each channel
+            mean = data_t.mean(dim=(1, 2), keepdim=True)
+            data_t = data_t - mean
 
             # mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
             # max_wavenumber = torch.argmax(mean_pixel_value_every_dimension)
