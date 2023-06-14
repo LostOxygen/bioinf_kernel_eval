@@ -100,7 +100,7 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
 
     model = model.to(device)
     loss_fn = nn.BCELoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4, momentum=0.9)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.9, patience=5, verbose=True)
 
 
