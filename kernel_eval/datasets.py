@@ -170,9 +170,9 @@ class SingleFileDataset(Dataset[Any]):
             # normalization by peak
             
             mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
-            max_index_of_max_pixel_val = torch.argmax(mean_pixel_value_every_dimension)
-            print(max_index_of_max_pixel_val)
-            range = 20
+            # max_index_of_max_pixel_val = torch.argmax(mean_pixel_value_every_dimension)
+            # print(max_index_of_max_pixel_val)
+            range = 10
             estimated_peak_point = 359
             peak_interval = mean_pixel_value_every_dimension[estimated_peak_point-range:estimated_peak_point+range]
             peak_point = torch.max(peak_interval)

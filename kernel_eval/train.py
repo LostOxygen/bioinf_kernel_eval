@@ -35,22 +35,6 @@ def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int)
         param_group["lr"] = new_lr
 
 
-def recall(y_true, y_pred):
-    true_positives = torch.sum(y_true * y_pred)
-    possible_positives = torch.sum(y_true)
-    return true_positives / (possible_positives + 1e-9)
-
-def precision(y_true, y_pred):
-    true_positives = torch.sum(y_true * y_pred)
-    predicted_positives = torch.sum(y_pred)
-    return true_positives / (predicted_positives + 1e-9)
-
-def f1_score(y_true, y_pred):
-    prec = precision(y_true, y_pred)
-    rec = recall(y_true, y_pred)
-    return 2 * (prec * rec) / (prec + rec + 1e-9)
-
-
 def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_dataloader: IterableDataset,
                 learning_rate: float, epochs: int, batch_size: int,
                 device: str = "cpu", model_type: str = "no_model", depthwise: bool = True,
@@ -124,10 +108,6 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
         # adjust the learning rate
         # adjust_learning_rate(optimizer, epoch, epochs, learning_rate)
 
-        # After the training loop for each epoch
-        avg_epoch_loss = sum(epoch_loss) / len(epoch_loss)
-        scheduler.step(avg_epoch_loss)
-
         for batch_idx, (data, label) in enumerate(train_dataloader):
             data, label = data.to(device), label.float().to(device)
 
@@ -159,6 +139,10 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
             wandb.log({"train_acc": 100 * correct/total, "train_loss": running_loss/(batch_idx+1)})
+
+        # After the training loop for each epoch
+        avg_epoch_loss = sum(epoch_loss) / len(epoch_loss)
+        scheduler.step(avg_epoch_loss)
 
         # append the accuracy and loss of the current epoch to the lists
         train_accs.append(sum(epoch_acc) / len(epoch_acc))
