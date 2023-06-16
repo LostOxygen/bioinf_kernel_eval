@@ -3,6 +3,9 @@ models/
 data/
 logs/
 plots/
+wandb/
+*.npy
+*.swp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import List, Tuple
 import torch
 from torch import nn
-from torch.nn import functional as F
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -185,27 +184,28 @@ def augment_images(img: torch.Tensor, size: int) -> torch.Tensor:
     return cropped_resized_image
 
 
-def normalize_spectral_data(img: torch.Tensor, num_channel: int, max_wavenumber: int,
-                            max_integral: int=100, tiny: float=1e-9) -> torch.Tensor:
+def normalize_spectral_data(img: torch.Tensor) -> torch.Tensor:
     """
-    Normaizes the image spectral data
+    Normalizes the image spectral data wrt. the amidi-band spectral peak (359)
     Parameters:
         img [CxHxW]: torch.Tensor - image to apply normalization over all channels to
-        num_channels - number of channels in the image
-        max_wavenumber - the index of the channel with the highest avg pixel value
-        max_integral - tba
-        tiny - value for preventing zero divsion
     
     Returns:
         img: torch.Tensor - normalized image
     """
-    min_values, _ = torch.min(img, 0)
-    max_ratio = 1 / (img[max_wavenumber, :, :] - min_values + tiny)
+    # normalization by peak
+    spectral_mean = torch.mean(img, (1, 2))
 
-    for wavenumber in range(num_channel):
-        img[wavenumber, :, :] = (img[wavenumber, :, :] - min_values) * max_ratio
+    amidi_range = 10
+    est_peak = 359
+    # look for the peak in the amidi band area (359 +- 10)
+    amidi_peak_interval = spectral_mean[(est_peak - amidi_range): (est_peak + amidi_range)]
+    # take the actual peak value
+    peak_point = torch.max(amidi_peak_interval)
+    img /= peak_point
 
-    mask_bad_spectra = torch.trapz(img, dim=0) > max_integral
-    img[:, mask_bad_spectra.squeeze()] = tiny
+    # substract mean along each channel
+    mean = torch.mean(img, dim=(1, 2), keepdim=True)
+    img -= mean
 
-    return img.float()
+    return img

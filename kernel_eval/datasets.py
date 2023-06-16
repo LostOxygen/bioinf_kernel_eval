@@ -76,18 +76,20 @@ def process_data(data_paths: List[str], data_out: str) -> None:
                 pbar.update(1)
     pbar.close()
 
+
 class SingleFileDatasetLoadingOptions(Enum):
-    TRAIN = 'train'
-    TEST = 'test'
-    VALIDATION = 'validation'
+    TRAIN = "train"
+    TEST = "test"
+    VALIDATION = "validation"
+
 
 class SingleFileDataset(Dataset[Any]):
     """
     Dataset class implementation which loads a single image at a time
     """
 
-    def __init__(self, data_paths: List[str], loading_option: SingleFileDatasetLoadingOptions, transform: transforms=None,
-                 augment: bool = False, normalize: bool = False):
+    def __init__(self, data_paths: List[str], loading_option: SingleFileDatasetLoadingOptions,
+                 transform: transforms=None, augment: bool = False, normalize: bool = False):
         super().__init__()
         # data_paths need to be a list of paths to the actual numpy data arrays
         self.data_paths: List[str] = data_paths
@@ -99,8 +101,7 @@ class SingleFileDataset(Dataset[Any]):
         self.transform: torch.transforms = transform
 
         train_ratio = 0.8
-        validation_ratio = 0.1
-        test_ratio = 0.1
+        test_val_ratio = 0.1
 
         for data_path in data_paths:
             file_list = glob(data_path+"data*.npy")
@@ -115,7 +116,7 @@ class SingleFileDataset(Dataset[Any]):
                 curr_label = torch.tensor(labels[idx]).long()
                 # tuple of (file_path: str, label: torch.Tensor)
                 data_in_current_folder.append((file, curr_label))
-            
+
             random.shuffle(data_in_current_folder)
 
             # take the number of the files in the current folder, since for train/test-splitting
@@ -123,7 +124,7 @@ class SingleFileDataset(Dataset[Any]):
             num_samples_in_folder = len(data_in_current_folder)
 
             num_train = int(train_ratio * num_samples_in_folder)
-            num_validation = int(validation_ratio * num_samples_in_folder)
+            num_tv = int(test_val_ratio * num_samples_in_folder)
 
             if self.loading_option == SingleFileDatasetLoadingOptions.TRAIN:
                 training_data_current_folder = data_in_current_folder[:num_train]
@@ -134,7 +135,7 @@ class SingleFileDataset(Dataset[Any]):
                     self.data.append(data_entry)
 
             elif self.loading_option == SingleFileDatasetLoadingOptions.VALIDATION:
-                validation_data_current_folder = data_in_current_folder[num_train:num_train + num_validation]
+                validation_data_current_folder = data_in_current_folder[num_train:num_train+num_tv]
                 # add to total num_of_samples for __len__() function
                 self.num_samples += len(validation_data_current_folder)
                 # append the testset tuples to the data list
@@ -142,12 +143,13 @@ class SingleFileDataset(Dataset[Any]):
                     self.data.append(data_entry)
 
             elif self.loading_option == SingleFileDatasetLoadingOptions.TEST:
-                test_data_current_folder = data_in_current_folder[num_train + num_validation:]
+                test_data_current_folder = data_in_current_folder[num_train + num_tv:]
                 # add to total num_of_samples for __len__() function
                 self.num_samples += len(test_data_current_folder)
                 # append the testset tuples to the data list
                 for data_entry in test_data_current_folder:
                     self.data.append(data_entry)
+
 
     def __len__(self) -> int:
         return self.num_samples
@@ -165,29 +167,8 @@ class SingleFileDataset(Dataset[Any]):
         data_t = torch.from_numpy(data_np).float()
 
         if self.normalize:
-            # find amidi-band by searching for the highest mean pixel value over all channels
-
-            # normalization by peak
-            
-            mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
-            # max_index_of_max_pixel_val = torch.argmax(mean_pixel_value_every_dimension)
-            # print(max_index_of_max_pixel_val)
-            range = 10
-            estimated_peak_point = 359
-            peak_interval = mean_pixel_value_every_dimension[estimated_peak_point-range:estimated_peak_point+range]
-            peak_point = torch.max(peak_interval)
-            data_t /= peak_point
-
-            # substract mean along each channel
-            mean = data_t.mean(dim=(1, 2), keepdim=True)
-            data_t = data_t - mean
-
-            # mean_pixel_value_every_dimension = torch.mean(data_t, (1, 2))
-            # max_wavenumber = torch.argmax(mean_pixel_value_every_dimension)
-
-            # # normalize the data
-            # data_t = normalize_spectral_data(data_t, num_channel=data_t.shape[1],
-            #                                  max_wavenumber=max_wavenumber)
+            # normalize the data
+            data_t = normalize_spectral_data(data_t)
 
         if self.augment:
             # apply augmentation to the images
