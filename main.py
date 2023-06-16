@@ -161,4 +161,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(**vars(args))
 
-    #python main.py --gpu 2 --batch_size 8 --learning_rate 0.0001 --epochs 100 --model_type vgg19
+    #python main.py --gpu 2 --batch_size 8 --learning_rate 0.0001 --epochs 100 --model_type vgg19 --eval_only
