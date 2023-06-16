@@ -155,7 +155,7 @@ if __name__ == "__main__":
     parser.add_argument("--depthwise", "-d", help="enables depthwise conv",
                         action="store_true", default=True)
     parser.add_argument("--eval_only", "-ev", help="evaluates the model without training",
-                        action="store_true", default=True)
+                        action="store_true", default=False)
     parser.add_argument("--normalize", "-no", help="enables normalization",
                         action="store_true", default=True)
     args = parser.parse_args()

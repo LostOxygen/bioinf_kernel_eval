@@ -182,6 +182,8 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
         test_accuracy: float - the test accuracy
     """
     # test the model without gradient calculation and in evaluation mode
+
+
     with torch.no_grad():
         model = model.to(device)
         model.eval()
@@ -196,7 +198,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
             predicted = output.round()
             total += label.size(0)
             correct += predicted.eq(label).sum().item()
-            wandb.log({"test_acc": 100 * correct / total})
+            # wandb.log({"test_acc": 100 * correct / total})
         print(f"Test Accuracy: {100. * correct / total}%")
 
     return 100. * correct / total
