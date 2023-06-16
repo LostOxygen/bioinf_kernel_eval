@@ -8,6 +8,8 @@ import pkbar
 from tqdm import tqdm
 from kernel_eval.utils import save_model
 import wandb
+import numpy as np
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
 def adjust_learning_rate(optimizer, epoch: int, epochs: int, learning_rate: int) -> None:
@@ -60,7 +62,7 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
 
     wandb.init(
         # set the wandb project where this run will be logged
-        project="kernel_eval",
+        project="kernel_optimization",
 
         # track hyperparameters and run metadata
         config={
@@ -68,6 +70,7 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
         "architecture": model_type,
         "dataset": "bioimages",
         "epochs": str(epochs),
+        "depthwise": depthwise
         }
     )
 
@@ -82,11 +85,17 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
     model = model.to(device)
     loss_fn = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.9, patience=5, verbose=True)
+
 
     for epoch in range(0, epochs):
         # every epoch a new progressbar is created
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
+
+        TP = 0
+        FP = 0
+        FN = 0
         model.train()
         kbar = pkbar.Kbar(target=len(train_dataloader) - 1, epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
@@ -121,13 +130,32 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset, validation_
             correct += predicted.eq(label).sum().item()
             epoch_acc.append(100. * correct / total)
 
+            # Calculate metrics
+            # Update TP, FP, and FN counters
+            TP += ((predicted == 1) & (label == 1)).sum().item()
+            FP += ((predicted == 1) & (label == 0)).sum().item()
+            FN += ((predicted == 0) & (label == 1)).sum().item()
+
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
             wandb.log({"train_acc": 100 * correct/total, "train_loss": running_loss/(batch_idx+1)})
 
+        # After the training loop for each epoch
+        avg_epoch_loss = sum(epoch_loss) / len(epoch_loss)
+        scheduler.step(avg_epoch_loss)
+
         # append the accuracy and loss of the current epoch to the lists
         train_accs.append(sum(epoch_acc) / len(epoch_acc))
         train_losses.append(sum(epoch_loss) / len(epoch_loss))
+
+        # Calculate average metrics for the epoch
+        # Calculate precision, recall, and F1 score
+        precision = TP / (TP + FP) if TP + FP > 0 else 0
+        recall = TP / (TP + FN) if TP + FN > 0 else 0
+        f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
+
+        wandb.log({"train_recall": recall, "train_precision": precision, "train_f1": f1_score})
+
 
         # for every epoch use the validation set to check if this is the best model yet
         validation_acc = test_model(model, validation_dataloader, device)
@@ -154,6 +182,8 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
         test_accuracy: float - the test accuracy
     """
     # test the model without gradient calculation and in evaluation mode
+
+
     with torch.no_grad():
         model = model.to(device)
         model.eval()
@@ -168,7 +198,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
             predicted = output.round()
             total += label.size(0)
             correct += predicted.eq(label).sum().item()
-            wandb.log({"test_acc": 100 * correct / total})
+            # wandb.log({"test_acc": 100 * correct / total})
         print(f"Test Accuracy: {100. * correct / total}%")
 
     return 100. * correct / total

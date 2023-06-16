@@ -72,14 +72,16 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     print("[ loading training data ]")
     train_data = SingleFileDataset(data_paths=DATA_PATHS,
                                    loading_option=SingleFileDatasetLoadingOptions.TRAIN,
-                                   augment=True, normalize=normalize)
+                                   augment=True,
+                                   normalize=normalize)
 
     train_loader = DataLoader(dataset=train_data, batch_size=batch_size,
                               shuffle=True, num_workers=2)
 
     validation_data = SingleFileDataset(data_paths=DATA_PATHS,
                                         loading_option=SingleFileDatasetLoadingOptions.VALIDATION,
-                                        augment=True, normalize=normalize)
+                                        augment=True,
+                                        normalize=normalize)
 
     validation_loader = DataLoader(dataset=validation_data, batch_size=1,
                                    shuffle=True, num_workers=2)
@@ -157,10 +159,12 @@ if __name__ == "__main__":
     parser.add_argument("--model_type", "-m", help="specifies the model architecture",
                         type=str, default="vgg11")
     parser.add_argument("--depthwise", "-d", help="enables depthwise conv",
-                        action="store_true", default=False)
+                        action="store_true", default=True)
     parser.add_argument("--eval_only", "-ev", help="evaluates the model without training",
                         action="store_true", default=False)
     parser.add_argument("--normalize", "-no", help="enables normalization",
-                        action="store_true", default=False)
+                        action="store_true", default=True)
     args = parser.parse_args()
     main(**vars(args))
+
+    #python main.py --gpu 2 --batch_size 8 --learning_rate 0.0001 --epochs 100 --model_type vgg19 --eval_only
