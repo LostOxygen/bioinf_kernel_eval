@@ -85,7 +85,7 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset,
     model = model.to(device)
     loss_fn = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.9, patience=5, verbose=True)
+    scheduler = ReduceLROnPlateau(optimizer, mode="min", factor=0.9, patience=5, verbose=True)
 
 
     for epoch in range(0, epochs):
