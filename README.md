@@ -11,7 +11,7 @@ python main.py [-h] [--gpu | -g DEVICE_ID] [--batch_size | -bs BATCH_SIZE] [--ep
 python main.py --gpu 0 --batch_size 32 --epochs 100
 ```
 
-### Training Arguments
+## Training Arguments
 | Argument | Type | Description |
 |----------|------|-------------|
 | -h, --help | None | shows argument help message |
