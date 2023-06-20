@@ -117,8 +117,6 @@ class SingleFileDataset(Dataset[Any]):
                 # tuple of (file_path: str, label: torch.Tensor)
                 data_in_current_folder.append((file, curr_label))
 
-            random.shuffle(data_in_current_folder)
-
             # take the number of the files in the current folder, since for train/test-splitting
             # we only want to take certain amount of files from each folder
             num_samples_in_folder = len(data_in_current_folder)
