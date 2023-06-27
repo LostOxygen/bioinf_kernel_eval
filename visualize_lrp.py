@@ -9,9 +9,9 @@ from typing import Final, List
 
 import torch
 from torch.utils.data import DataLoader
-from captum import LRP
+from captum.attr import LRP
 from captum.attr import visualization as viz
-import numpy as np
+# import numpy as np
 from matplotlib import pyplot as plt
 
 from kernel_eval.models import vgg11, vgg13, vgg16, vgg19, resnet34
