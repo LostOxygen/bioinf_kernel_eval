@@ -8,3 +8,5 @@ pkbar
 tqdm
 webdataset
 wandb
+captum
+numpy
