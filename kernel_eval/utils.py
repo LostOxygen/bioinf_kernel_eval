@@ -1,13 +1,21 @@
 """utility library for various functions"""
 import os
 import random
+from enum import Enum
 from glob import glob
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Union
 import torch
 from torch import nn
 import numpy as np
 from matplotlib import pyplot as plt
+
+
+class VisualizeSign(Enum):
+    POSITIVE = 1
+    ABSOLUTE = 2
+    NEGATIVE = 3
+    ALL = 4
 
 
 def save_model(model_path: str, model_name: str, depthwise: bool,
@@ -209,3 +217,52 @@ def normalize_spectral_data(img: torch.Tensor) -> torch.Tensor:
     img -= mean
 
     return img
+
+
+def normalize_attribute(
+    attr: np.ndarray,
+    sign: str,
+    outlier_perc: Union[int, float] = 2,
+    reduction_axis: Optional[int] = None,
+):
+    attr_combined = attr
+    if reduction_axis is not None:
+        attr_combined = np.sum(attr, axis=reduction_axis)
+
+    # Choose appropriate signed values and rescale, removing given outlier percentage.
+    if VisualizeSign[sign] == VisualizeSign.ALL:
+        threshold = cumulative_sum_threshold(
+            np.abs(attr_combined), 100 - outlier_perc)
+    elif VisualizeSign[sign] == VisualizeSign.POSITIVE:
+        attr_combined = (attr_combined > 0) * attr_combined
+        threshold = cumulative_sum_threshold(
+            attr_combined, 100 - outlier_perc)
+    elif VisualizeSign[sign] == VisualizeSign.NEGATIVE:
+        attr_combined = (attr_combined < 0) * attr_combined
+        threshold = -1 * cumulative_sum_threshold(
+            np.abs(attr_combined), 100 - outlier_perc
+        )
+    elif VisualizeSign[sign] == VisualizeSign.ABSOLUTE:
+        attr_combined = np.abs(attr_combined)
+        threshold = cumulative_sum_threshold(
+            attr_combined, 100 - outlier_perc)
+    else:
+        raise AssertionError("Visualize Sign type is not valid.")
+    return normalize_scale(attr_combined, threshold)
+
+
+def normalize_scale(attr: np.ndarray, scale_factor: float):
+    assert scale_factor != 0, "Cannot normalize by scale factor = 0"
+    attr_norm = attr / scale_factor
+    return np.clip(attr_norm, -1, 1)
+
+
+def cumulative_sum_threshold(values: np.ndarray, percentile: Union[int, float]):
+    # given values should be non-negative
+    assert percentile in range(0, 101), (
+        "Percentile for thresholding must be " "between 0 and 100 inclusive."
+    )
+    sorted_vals = np.sort(values.flatten())
+    cum_sums = np.cumsum(sorted_vals)
+    threshold_id = np.where(cum_sums >= cum_sums[-1] * 0.01 * percentile)[0][0]
+    return sorted_vals[threshold_id]
