@@ -60,7 +60,7 @@ class VGG(nn.Module):
         if self.is_cifar:
             out = F.softmax(out, dim=-1)
         else:
-            out = F.sigmoid(out)
+            out = torch.sigmoid(out)
 
         return out
 
@@ -251,7 +251,7 @@ class ResNet(nn.Module):
         if self.is_cifar:
             out = F.softmax(out, dim=-1)
         else:
-            out = F.sigmoid(out)
+            out = torch.sigmoid(out)
 
         return out
 
@@ -294,6 +294,6 @@ class SmolNet(nn.Module):
         if self.is_cifar:
             out = F.softmax(out, dim=-1)
         else:
-            out = F.sigmoid(out)
+            out = torch.sigmoid(out)
 
         return out
