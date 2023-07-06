@@ -189,6 +189,11 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
         model.eval()
         correct = 0
         total = 0
+
+        tp_val: float = 0
+        fp_val: float = 0
+        fn_val: float = 0
+
         for _, (data, label) in tqdm(enumerate(dataloader), total=len(dataloader)-1):
             data, label = data.to(device), label.float().to(device)
 
@@ -198,7 +203,13 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
             predicted = output.round()
             total += label.size(0)
             correct += predicted.eq(label).sum().item()
+            tp_val += ((predicted == 1) & (label == 1)).sum().item()
+            fp_val += ((predicted == 1) & (label == 0)).sum().item()
+            fn_val += ((predicted == 0) & (label == 1)).sum().item()
             # wandb.log({"test_acc": 100 * correct / total})
         print(f"Test Accuracy: {100. * correct / total}%")
+        precision = tp_val / (tp_val + fp_val) if tp_val + fp_val > 0 else 0
+        recall = tp_val / (tp_val + fn_val) if tp_val + fn_val > 0 else 0
+        f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
 
     return 100. * correct / total
