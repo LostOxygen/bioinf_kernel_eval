@@ -211,5 +211,6 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
         precision = tp_val / (tp_val + fp_val) if tp_val + fp_val > 0 else 0
         recall = tp_val / (tp_val + fn_val) if tp_val + fn_val > 0 else 0
         f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
+        print(f"train_recall ", recall, "  train_precision ", precision, "  train_f1 ", f1_score)
 
     return 100. * correct / total
