@@ -196,7 +196,7 @@ def main() -> None:
         axes[2].set_xticks([])
         axes[2].set_yticks([])
 
-        fig.savefig(f"./plots/{model_file}_lrp.png")
+        plt.savefig(f"./plots/{model_file}_lrp.png")
         plt.close()
 
         # create and save the LRP analysis for the specral channels
@@ -217,7 +217,7 @@ def main() -> None:
         axes[3].plot(attribution_spectral_depth)
         axes[3].set_title("Spectral Attribution Depthwise")
 
-        fig.savefig(f"./plots/{model_file}_spectral_lrp.png")
+        plt.savefig(f"./plots/{model_file}_spectral_lrp.png")
         plt.close()
 
     print("[ finished LRP analysis ]")
