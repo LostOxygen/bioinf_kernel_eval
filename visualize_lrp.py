@@ -176,6 +176,7 @@ def main() -> None:
 
         # create and save the normal LRP analysis
         fig, axes = plt.subplots(1, 3, figsize=(10, 3))
+        fig.suptitle(f"LRP Analysis - {model_type}")
         plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),
                      orientation="vertical", ax=axes,
                      label="Attribution Values")
@@ -200,6 +201,7 @@ def main() -> None:
 
         # create and save the LRP analysis for the specral channels
         fig, axes = plt.subplots(1, 4, figsize=(20, 5))
+        fig.suptitle(f"Spectral LRP Analysis - {model_type}")
         axes[0].grid()
         axes[0].imshow(img)
         axes[0].set_title("Input Image")
