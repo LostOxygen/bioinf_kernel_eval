@@ -226,8 +226,7 @@ def main(has_cancer: bool) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--has_cancer", "-hc", type=bool, default=False,
-                        help="choose between negative/positive cancer examples",
-                        action="store_true")
+    parser.add_argument("--has_cancer", "-hc", action="store_true", default=False,
+                        help="choose between negative/positive cancer examples")
     args = parser.parse_args()
     main(**vars(args))
