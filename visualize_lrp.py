@@ -52,6 +52,7 @@ def main(has_cancer: bool) -> None:
           f"{os.cpu_count()} threads and "
           f"{torch.cuda.device_count()} GPUs on {socket.gethostname()}")
     print(f"## Using: {device}")
+    print(f"## Visualizing LRP for cancer={has_cancer}")
     print("#"*60)
     print()
 
@@ -225,7 +226,8 @@ def main(has_cancer: bool) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--has_cancer", "-hc", type=bool, default=True,
-                        help="choose between negative/positive cancer examples")
+    parser.add_argument("--has_cancer", "-hc", type=bool, default=False,
+                        help="choose between negative/positive cancer examples",
+                        action="store_true")
     args = parser.parse_args()
     main(**vars(args))
