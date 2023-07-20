@@ -219,7 +219,7 @@ def main(has_cancer: bool) -> None:
         axes[1][2].plot(attribution_spectral_depth)
         axes[1][2].set_title("Spectral Attribution Depthwise")
 
-        plt.savefig(f"./plots/{model_file}_lrp_C_{has_cancer}.png")
+        plt.savefig(f"./plots/{model_file}_lrp_c_{has_cancer}.png")
         plt.close()
 
     print("[ finished LRP analysis ]")
