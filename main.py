@@ -115,11 +115,17 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     if not eval_only:
         print("[ train model ]")
-        model, best_acc, train_accs, train_losses = train_model(model, train_loader,
-                                                                validation_loader, learning_rate,
-                                                                epochs, batch_size, device,
-                                                                model_type, depthwise,
-                                                                MODEL_OUTPUT_PATH)
+        model_w_data = train_model(model, train_loader, validation_loader,
+                                   learning_rate, epochs, batch_size, device,
+                                   model_type, depthwise, MODEL_OUTPUT_PATH)
+        model = model_w_data[0] # the trained model itself
+        best_acc = model_w_data[1] # best accuracy
+        train_accs = model_w_data[2] # list of all accuracies
+        train_losses = model_w_data[3] # list of all train losses
+        f1_score = model_w_data[4]
+        precision = model_w_data[5]
+        recall = model_w_data[6]
+
     del train_loader
 
     # -------- Test Models and Evaluate Kernels ------------
@@ -140,7 +146,11 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
 
     if not eval_only:
         log_metrics(train_acc=best_acc,
-                    test_acc=test_accuracy, model_name=model_name)
+                    test_acc=test_accuracy,
+                    model_name=model_name,
+                    f1_score=f1_score,
+                    precision=precision,
+                    recall=recall)
         plot_metrics(train_acc=train_accs,
                      train_loss=train_losses, model_name=model_name)
 

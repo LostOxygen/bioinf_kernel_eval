@@ -58,6 +58,9 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset,
         train_accuracy: float - the accuracy at the end of the training
         train_losses: List[float] - the losses at the end of each epoch
         train_accs: List[float] - the accuracies at the end of each epoch
+        f1_score: float - the f1 score at the end of the training
+        precision: float - the precision at the end of the training
+        recall: float - the recall at the end of the training
     """
 
     wandb.init(
@@ -166,7 +169,8 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset,
             best_epoch = epoch
             save_model(mpath_out, model_type, depthwise, batch_size, learning_rate, epochs, model)
 
-    return best_model, train_accs[best_epoch], train_accs, train_losses
+    return (best_model, train_accs[best_epoch], train_accs, train_losses,
+            f1_score, precision, recall)
 
 
 def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu") -> float:

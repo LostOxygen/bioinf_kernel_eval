@@ -91,7 +91,8 @@ def create_1gb_random_array() -> None:
     np.save("1gb_array.npy", arr)
 
 
-def log_metrics(train_acc: float, test_acc: torch.Tensor, model_name: str) -> None:
+def log_metrics(train_acc: float, test_acc: torch.Tensor, model_name: str,
+                f1_score: float, precision: float, recall: float) -> None:
     """
     Logs score and loss for a model over epochs and saves the log under ./logs/model_name.log
     Parameters:
@@ -99,6 +100,9 @@ def log_metrics(train_acc: float, test_acc: torch.Tensor, model_name: str) -> No
         loss: torch.Tensor with the current loss of a given model
         epoch: current epoch
         model_name: the name of the model
+        f1_score: the f1 score of the model
+        precision: the precision of the model
+        recall: the recall of the model
     Returns:
         None
     """
@@ -108,7 +112,9 @@ def log_metrics(train_acc: float, test_acc: torch.Tensor, model_name: str) -> No
     try:
         with open(f"./logs/{model_name}.log", encoding="utf-8", mode="a") as log_file:
             log_file.write(f"{datetime.now().strftime('%A, %d. %B %Y %I:%M%p')}" \
-                           f" - train_acc: {train_acc} - test_acc: {test_acc}\n")
+                           f" - train_acc: {train_acc} - test_acc: {test_acc}" \
+                           f" - f1_score: {f1_score} - precision: {precision}" \
+                           f" - recall: {recall}\n")
     except OSError as error:
         print(f"Could not write logs into /logs/{model_name}.log - error: {error}")
 
