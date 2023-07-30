@@ -129,6 +129,7 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset,
 
         # for every epoch use the validation set to check if this is the best model yet
         validation_acc = test_model(model, validation_dataloader, device)
+        wandb.log({"validation_acc": validation_acc})
 
         if validation_acc > best_validation_acc:
             best_validation_acc = validation_acc
@@ -149,7 +150,7 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
         device: str - the device to test on (cpu or cuda)
     
     Returns:
-        test_accuracy: float - the test accuracy
+        test_accuracy: float - the test accuracy in percent
     """
     # test the model without gradient calculation and in evaluation mode
     tp_val: float = 0
@@ -187,4 +188,4 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
                    "train_f1": f1_score, "test_acc": 100 * correct / total})
         print(f"Test Accuracy: {accuracy}%")
 
-    return accuracy, precision, recall, f1_score
+    return (accuracy, precision, recall, f1_score)
