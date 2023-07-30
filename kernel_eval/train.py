@@ -62,21 +62,6 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset,
         precision: float - the precision at the end of the training
         recall: float - the recall at the end of the training
     """
-
-    wandb.init(
-        # set the wandb project where this run will be logged
-        project="kernel_optimization",
-
-        # track hyperparameters and run metadata
-        config={
-        "learning_rate": str(learning_rate),
-        "architecture": model_type,
-        "dataset": "bioimages",
-        "epochs": str(epochs),
-        "depthwise": depthwise
-        }
-    )
-
     # initialize model, loss function, optimizer and so on
     train_accs: List[float] = []
     train_losses: List[float] = []
@@ -96,9 +81,6 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset,
         # also, depending on the epoch the learning rate gets adjusted before
         # the network is set into training mode
 
-        tp_val: float = 0
-        fp_val: float = 0
-        fn_val: float = 0
         model.train()
         kbar = pkbar.Kbar(target=len(train_dataloader) - 1, epoch=epoch, num_epochs=epochs,
                           width=20, always_stateful=True)
@@ -133,12 +115,6 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset,
             correct += predicted.eq(label).sum().item()
             epoch_acc.append(100. * correct / total)
 
-            # Calculate metrics
-            # Update tp_val, fp_val, and fn_val counters
-            tp_val += ((predicted == 1) & (label == 1)).sum().item()
-            fp_val += ((predicted == 1) & (label == 0)).sum().item()
-            fn_val += ((predicted == 0) & (label == 1)).sum().item()
-
             kbar.update(batch_idx, values=[("loss", running_loss/(batch_idx+1)),
                                            ("acc", 100. * correct / total)])
             wandb.log({"train_acc": 100 * correct/total, "train_loss": running_loss/(batch_idx+1)})
@@ -151,15 +127,6 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset,
         train_accs.append(sum(epoch_acc) / len(epoch_acc))
         train_losses.append(sum(epoch_loss) / len(epoch_loss))
 
-        # Calculate average metrics for the epoch
-        # Calculate precision, recall, and F1 score
-        precision = tp_val / (tp_val + fp_val) if tp_val + fp_val > 0 else 0
-        recall = tp_val / (tp_val + fn_val) if tp_val + fn_val > 0 else 0
-        f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
-
-        wandb.log({"train_recall": recall, "train_precision": precision, "train_f1": f1_score})
-
-
         # for every epoch use the validation set to check if this is the best model yet
         validation_acc = test_model(model, validation_dataloader, device)
 
@@ -169,8 +136,7 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset,
             best_epoch = epoch
             save_model(mpath_out, model_type, depthwise, batch_size, learning_rate, epochs, model)
 
-    return (best_model, train_accs[best_epoch], train_accs, train_losses,
-            f1_score, precision, recall)
+    return (best_model, train_accs[best_epoch], train_accs, train_losses)
 
 
 def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu") -> float:
@@ -186,7 +152,9 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
         test_accuracy: float - the test accuracy
     """
     # test the model without gradient calculation and in evaluation mode
-
+    tp_val: float = 0
+    fp_val: float = 0
+    fn_val: float = 0
 
     with torch.no_grad():
         model = model.to(device)
@@ -202,7 +170,21 @@ def test_model(model: nn.Module, dataloader: IterableDataset, device: str="cpu")
             predicted = output.round()
             total += label.size(0)
             correct += predicted.eq(label).sum().item()
-            # wandb.log({"test_acc": 100 * correct / total})
-        print(f"Test Accuracy: {100. * correct / total}%")
+            # Calculate metrics
+            # Update tp_val, fp_val, and fn_val counters
+            tp_val += ((predicted == 1) & (label == 1)).sum().item()
+            fp_val += ((predicted == 1) & (label == 0)).sum().item()
+            fn_val += ((predicted == 0) & (label == 1)).sum().item()
 
-    return 100. * correct / total
+        # Calculate average metrics for the epoch
+        # Calculate precision, recall, and F1 score
+        accuracy = 100. * correct / total
+        precision = tp_val / (tp_val + fp_val) if tp_val + fp_val > 0 else 0
+        recall = tp_val / (tp_val + fn_val) if tp_val + fn_val > 0 else 0
+        f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
+
+        wandb.log({"train_recall": recall, "train_precision": precision,
+                   "train_f1": f1_score, "test_acc": 100 * correct / total})
+        print(f"Test Accuracy: {accuracy}%")
+
+    return accuracy, precision, recall, f1_score

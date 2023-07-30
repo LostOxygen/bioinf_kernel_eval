@@ -9,6 +9,7 @@ import os
 from typing import Final, List
 import torch
 import torchsummary
+import wandb
 
 from torch.utils.data import DataLoader
 
@@ -113,6 +114,22 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     model_name = model_type + f"_{batch_size}bs_{learning_rate}lr_{epochs}ep"
     model_name += f"{'_depthwise' if depthwise else ''}"
 
+    # initialize WandB logging
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="kernel_optimization",
+        name=model_name,
+
+        # track hyperparameters and run metadata
+        config={
+        "learning_rate": str(learning_rate),
+        "architecture": model_type,
+        "dataset": "bioimages",
+        "epochs": str(epochs),
+        "depthwise": depthwise
+        }
+    )
+
     if not eval_only:
         print("[ train model ]")
         model_w_data = train_model(model, train_loader, validation_loader,
@@ -122,9 +139,6 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
         best_acc = model_w_data[1] # best accuracy
         train_accs = model_w_data[2] # list of all accuracies
         train_losses = model_w_data[3] # list of all train losses
-        f1_score = model_w_data[4]
-        precision = model_w_data[5]
-        recall = model_w_data[6]
 
     del train_loader
 
@@ -142,7 +156,11 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
                            batch_size, learning_rate, epochs, model)
 
     print("[ evaluate model ]")
-    test_accuracy = test_model(model, test_loader, device)
+    test_metrics = test_model(model, test_loader, device)
+    test_accuracy = test_metrics[0]
+    precision = test_metrics[1]
+    recall = test_metrics[2]
+    f1_score = test_metrics[3]
 
     if not eval_only:
         log_metrics(train_acc=best_acc,
