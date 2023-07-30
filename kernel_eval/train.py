@@ -128,7 +128,7 @@ def train_model(model: nn.Module, train_dataloader: IterableDataset,
         train_losses.append(sum(epoch_loss) / len(epoch_loss))
 
         # for every epoch use the validation set to check if this is the best model yet
-        validation_acc = test_model(model, validation_dataloader, device)
+        validation_acc = test_model(model, validation_dataloader, device)[0]
         wandb.log({"validation_acc": validation_acc})
 
         if validation_acc > best_validation_acc:
