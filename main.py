@@ -54,19 +54,21 @@ def main(gpu: int, batch_size: int, epochs: int, model_type: str,
     else:
         device = f"cuda:{gpu}"
 
-    print("\n\n\n"+"#"*60)
+    print("\n\n\n"+"#"*os.get_terminal_size().columns)
     print("## " + str(datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p")))
     print(f"## System: {torch.get_num_threads()} CPU cores with "
           f"{os.cpu_count()} threads and "
           f"{torch.cuda.device_count()} GPUs on {socket.gethostname()}")
-    print(f"## Using: {device}")
+    print(f"## Device: {device}")
+    if torch.cuda.is_available():
+        print(f"## GPU Memory: {torch.cuda.mem_get_info()[1] // 1024**2} MB")
     print(f"## Batch Size: {batch_size}")
     print(f"## Learning Rate: {learning_rate}")
     print(f"## Epochs: {epochs}")
     print(f"## Model: {model_type}")
     print(f"## Depthwise: {depthwise}")
     print(f"## Normalization: {normalize}")
-    print("#"*60)
+    print("#"*os.get_terminal_size().columns)
     print()
 
     # ---------------- Create/Load Datasets ----------------
