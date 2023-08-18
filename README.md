@@ -22,3 +22,6 @@ python main.py --gpu 0 --batch_size 32 --epochs 100
 | -m, --model_type | STRING | model type to use [vgg11, vgg13, vgg16, vgg19, resnet34] (default='vgg11') |
 | -d, --depthwise | BOOL | use depthwise separable convolutions (default=False) |
 | -ev, --eval_only | BOOL | evaluate model only (default=False) |
+
+# Project Poster:
+![Project Poster](https://github.com/LostOxygen/bioinf_kernel_eval/blob/main/images/poster.svg)
